@@ -31,7 +31,7 @@ Blockchain provides:
 
 ## System Architecture
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────┐
 │                    AarogyaGuard (Next.js)                   │
 │         Patient/Doctor/Admin Dashboards (React UI)          │
@@ -61,7 +61,7 @@ Blockchain provides:
               │          │          │
           Genesis    Block #1    Block #2
           Block      (Patient A) (Patient B)
-```
+\`\`\`
 
 ---
 
@@ -69,7 +69,7 @@ Blockchain provides:
 
 Each block contains:
 
-```json
+\`\`\`json
 {
   "index": 1,
   "timestamp": "2024-01-15T10:30:45.123456",
@@ -78,7 +78,7 @@ Each block contains:
   "previous_hash": "sha256_of_previous_block",
   "hash": "sha256_of_this_block"
 }
-```
+\`\`\`
 
 ### Components Explained
 
@@ -107,15 +107,15 @@ Each block contains:
 **Endpoint**: `POST /blockchain/add`
 
 **Request** (from Next.js backend):
-```json
+\`\`\`json
 {
   "patient_hash": "a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
   "consultation_summary": "Patient presents with fever and cough. Vital signs stable. Prescribed amoxicillin and paracetamol."
 }
-```
+\`\`\`
 
 **Response** (returned to frontend):
-```json
+\`\`\`json
 {
   "success": true,
   "block": {
@@ -128,7 +128,7 @@ Each block contains:
   },
   "message": "Consultation recorded on blockchain. Block #42"
 }
-```
+\`\`\`
 
 ---
 
@@ -137,12 +137,12 @@ Each block contains:
 **Endpoint**: `GET /blockchain/patient/{patient_hash}`
 
 **Request**:
-```
+\`\`\`
 GET http://localhost:8000/blockchain/patient/a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8
-```
+\`\`\`
 
 **Response**:
-```json
+\`\`\`json
 {
   "patient_hash": "a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
   "total_records": 3,
@@ -168,7 +168,7 @@ GET http://localhost:8000/blockchain/patient/a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e
     }
   ]
 }
-```
+\`\`\`
 
 ---
 
@@ -177,18 +177,18 @@ GET http://localhost:8000/blockchain/patient/a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e
 **Endpoint**: `GET /blockchain/validate`
 
 **Request**:
-```
+\`\`\`
 GET http://localhost:8000/blockchain/validate
-```
+\`\`\`
 
 **Response**:
-```json
+\`\`\`json
 {
   "is_valid": true,
   "total_blocks": 43,
   "message": "Blockchain is valid and immutable"
 }
-```
+\`\`\`
 
 ---
 
@@ -197,12 +197,12 @@ GET http://localhost:8000/blockchain/validate
 **Endpoint**: `GET /blockchain/stats`
 
 **Request**:
-```
+\`\`\`
 GET http://localhost:8000/blockchain/stats
-```
+\`\`\`
 
 **Response**:
-```json
+\`\`\`json
 {
   "total_blocks": 43,
   "total_patients": 15,
@@ -214,7 +214,7 @@ GET http://localhost:8000/blockchain/stats
   },
   "blockchain_valid": true
 }
-```
+\`\`\`
 
 ---
 
@@ -224,15 +224,15 @@ GET http://localhost:8000/blockchain/stats
 Patient clicks "Save Consultation" → Next.js frontend collects data
 
 ### Step 2: Next.js Backend Processes
-```typescript
+\`\`\`typescript
 // app/api/blockchain/add/route.ts
 1. Hash the patient ID (SHA-256)
 2. Prepare consultation summary (de-identified)
 3. Call Python blockchain service
-```
+\`\`\`
 
 ### Step 3: Python Service Records Block
-```python
+\`\`\`python
 # blockchain-service/main.py
 1. Receive hashed patient ID + summary
 2. Create new block
@@ -240,15 +240,15 @@ Patient clicks "Save Consultation" → Next.js frontend collects data
 4. Calculate block hash (SHA-256)
 5. Add to chain
 6. Return block hash + timestamp
-```
+\`\`\`
 
 ### Step 4: Frontend Displays Proof
-```
+\`\`\`
 Medical Record Secured on Blockchain ✓
 Block Hash: 7f3a9b2c5e1d8f4a6c7b9e2f1d3a5c8b2e4f6a9d1c3e5f7a9b2d4f6a8c1e
 Timestamp: 2024-01-15 10:30:45 UTC
 Block #42
-```
+\`\`\`
 
 ---
 
@@ -261,7 +261,7 @@ Block #42
 
 ### Step 1: Start the Python Blockchain Service
 
-```bash
+\`\`\`bash
 # Navigate to blockchain service directory
 cd blockchain-service
 
@@ -270,50 +270,50 @@ pip install -r requirements.txt
 
 # Run the service
 uvicorn main:app --reload --port 8000
-```
+\`\`\`
 
 **Expected Output**:
-```
+\`\`\`
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started server process [12345]
-```
+\`\`\`
 
 ### Step 2: Configure Next.js Environment
 
 Add to your `.env.local`:
-```env
+\`\`\`env
 BLOCKCHAIN_SERVICE_URL=http://localhost:8000
-```
+\`\`\`
 
 ### Step 3: Start Next.js Application
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 ### Step 4: Test the Integration
 
 #### Test Blockchain Service Directly
-```bash
+\`\`\`bash
 curl http://localhost:8000
 
 # Expected: Service health check response
-```
+\`\`\`
 
 #### Add a Test Consultation
-```bash
+\`\`\`bash
 curl -X POST http://localhost:8000/blockchain/add \
   -H "Content-Type: application/json" \
   -d '{
     "patient_hash": "a7f3b9c2e1d4f8a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8",
     "consultation_summary": "Test consultation - fever and cough"
   }'
-```
+\`\`\`
 
 #### Verify Blockchain
-```bash
+\`\`\`bash
 curl http://localhost:8000/blockchain/validate
-```
+\`\`\`
 
 ---
 

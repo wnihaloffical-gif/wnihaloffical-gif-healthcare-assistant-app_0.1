@@ -5,7 +5,7 @@ Performs real-time predictions using trained models
 
 import json
 import pickle
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 import os
 
 
@@ -215,9 +215,6 @@ class InferenceEngine:
 
         return summary
 
-
-# Type hints
-from typing import Tuple
 
 if __name__ == "__main__":
     engine = InferenceEngine()

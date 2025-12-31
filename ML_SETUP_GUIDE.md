@@ -9,7 +9,7 @@ This guide explains how to set up and run the complete ML/DL prototype for Aarog
 
 ## Architecture
 
-```
+\`\`\`
 ┌─────────────────────────────────────────────────────────────┐
 │                   AAROGYAGUARD ML SYSTEM                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -48,39 +48,39 @@ This guide explains how to set up and run the complete ML/DL prototype for Aarog
 │     └─ Enables tamper-proof verification                     │
 │                                                               │
 └─────────────────────────────────────────────────────────────┘
-```
+\`\`\`
 
 ## Setup Instructions
 
 ### Step 1: Install Python Dependencies
-```bash
+\`\`\`bash
 cd ml-service
 pip install -r requirements.txt
-```
+\`\`\`
 
 ### Step 2: Generate Synthetic Dataset
-```bash
+\`\`\`bash
 python dataset_generator.py
 # Output: ml-service/synthetic_data.json (10,000 records)
-```
+\`\`\`
 
 ### Step 3: Train Models
-```bash
+\`\`\`bash
 python model_trainer.py
 # Output: ml-service/models/{5 trained models}
-```
+\`\`\`
 
 ### Step 4: Start ML Service
-```bash
+\`\`\`bash
 python app.py
 # Service runs on http://localhost:8002
-```
+\`\`\`
 
 ### Step 5: Configure Next.js Environment
 Add to `.env.local`:
-```
+\`\`\`
 NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:8002
-```
+\`\`\`
 
 ### Step 6: Test Full Flow
 1. Navigate to http://localhost:3000
@@ -124,7 +124,7 @@ NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:8002
 ## Dataset Specification
 
 Each synthetic record contains:
-```json
+\`\`\`json
 {
   "patient_id": "patient_0",
   "symptoms_text": "Patient reports fever, cough, body_ache...",
@@ -155,7 +155,7 @@ Each synthetic record contains:
   "timestamp": "2024-01-15T10:30:00",
   "current_medications": ["lisinopril", "metformin"]
 }
-```
+\`\`\`
 
 ## Fallback Logic
 
@@ -172,27 +172,27 @@ This ensures the application never fails even if ML components are unavailable.
 Consultation records are verified using smart contract:
 
 ### Deploy Smart Contract
-```bash
+\`\`\`bash
 cd blockchain-service
 # Using Hardhat or Remix
 npx hardhat run scripts/deploy.js
-```
+\`\`\`
 
 ### Record Consultation Hash
-```javascript
+\`\`\`javascript
 recordConsultation(
   consultationId,
   consultationHash,
   resultHash,
   metadataURI
 )
-```
+\`\`\`
 
 ### Verify Record Integrity
-```javascript
+\`\`\`javascript
 verifyConsultation(consultationId, expectedHash)
 // Returns: true if record is unmodified, false if tampered
-```
+\`\`\`
 
 ## Performance Benchmarks
 
@@ -208,18 +208,18 @@ verifyConsultation(consultationId, expectedHash)
 ## Troubleshooting
 
 ### Models not loading
-```bash
+\`\`\`bash
 # Ensure trained models exist
 ls ml-service/models/
 # Should show: symptom_disease.pkl, risk_classifier.pkl, etc.
-```
+\`\`\`
 
 ### ML Service not responding
-```bash
+\`\`\`bash
 # Check service is running
 curl http://localhost:8002/health
 # Should return: {"status": "healthy"}
-```
+\`\`\`
 
 ### Fallback logic triggered
 - Check console logs for "[v0] ML service unavailable"

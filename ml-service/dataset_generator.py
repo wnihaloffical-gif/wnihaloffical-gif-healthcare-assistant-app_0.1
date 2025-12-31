@@ -260,4 +260,4 @@ class SyntheticDatasetGenerator:
 if __name__ == "__main__":
     generator = SyntheticDatasetGenerator()
     dataset = generator.generate_dataset(10000)
-    generator.save_dataset(dataset, "ml-service/synthetic_data.json")
+    generator.save_dataset(dataset, "synthetic_data.json")

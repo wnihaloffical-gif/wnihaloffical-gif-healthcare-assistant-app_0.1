@@ -25,7 +25,7 @@ except ImportError:
 class MLModelTrainer:
     """Trains machine learning models on synthetic medical data"""
 
-    def __init__(self, dataset_path: str = "ml-service/synthetic_data.json"):
+    def __init__(self, dataset_path: str = "synthetic_data.json"):
         self.dataset_path = dataset_path
         self.dataset = None
         self.models = {}
