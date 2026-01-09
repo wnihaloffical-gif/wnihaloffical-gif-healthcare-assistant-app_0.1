@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import ConsultationCard from "@/components/patient/consultation-card"
+import { logger } from "@/lib/db/logger"
 import type { Consultation } from "@/lib/types"
 
 export default function PatientDashboard() {
@@ -11,47 +12,63 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(true)
   const [language, setLanguage] = useState("en")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userId, setUserId] = useState("")
+  const [error, setError] = useState("")
 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token")
       const role = localStorage.getItem("role")
+      const uid = localStorage.getItem("userId")
       const lang = localStorage.getItem("language") || "en"
 
-      if (!token || role !== "patient") {
-        console.log("[v0] Auth check failed - redirecting to home")
+      if (!token || role !== "patient" || !uid) {
+        logger.info("Auth check failed - redirecting to home", {}, "PATIENT_DASHBOARD")
         router.push("/")
         return
       }
 
       setLanguage(lang)
+      setUserId(uid)
       setIsAuthenticated(true)
 
-      // Mock load consultations
-      const mockConsultations: Consultation[] = [
-        {
-          id: "cons-1",
-          patientId: "user-1",
-          transcription: "I have fever and cough for 3 days",
-          symptoms: ["Fever", "Cough"],
-          probableConditions: ["Common Cold", "Influenza"],
-          riskLevel: "low",
-          suggestedMedicines: [],
-          ddiAlerts: [],
-          status: "completed",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        },
-      ]
-
-      setConsultations(mockConsultations)
-      setLoading(false)
+      fetchConsultations(uid)
     }
 
     // Use a small delay to ensure client-side rendering
     const timer = setTimeout(checkAuth, 100)
     return () => clearTimeout(timer)
   }, [router])
+
+  const fetchConsultations = async (patientId: string) => {
+    try {
+      logger.info("Fetching consultations from API", { patientId }, "PATIENT_DASHBOARD")
+
+      const response = await fetch(`/api/patient/${patientId}/consultations`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch consultations: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      logger.info("Consultations fetched successfully", { count: data.length }, "PATIENT_DASHBOARD")
+
+      setConsultations(data)
+      setError("")
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Unknown error"
+      logger.error("Failed to fetch consultations", { patientId }, "PATIENT_DASHBOARD", errorMsg)
+      setError("Failed to load consultations. Please try again.")
+      setConsultations([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const langText = {
     en: {
@@ -60,6 +77,7 @@ export default function PatientDashboard() {
       pastConsultations: "Past Consultations",
       noConsultations: "No consultations yet",
       logout: "Logout",
+      error: "Error loading consultations",
     },
     hi: {
       dashboard: "रोगी डैशबोर्ड",
@@ -67,6 +85,7 @@ export default function PatientDashboard() {
       pastConsultations: "पिछले परामर्श",
       noConsultations: "अभी कोई परामर्श नहीं",
       logout: "लॉग आउट",
+      error: "परामर्श लोड करने में त्रुटि",
     },
     mr: {
       dashboard: "रुग्ण डॅशबोर्ड",
@@ -74,12 +93,14 @@ export default function PatientDashboard() {
       pastConsultations: "मागील परामर्श",
       noConsultations: "अद्याप कोणताही परामर्श नाही",
       logout: "लॉग आउट",
+      error: "परामर्श लोड करू शकत नाही",
     },
   }
 
   const t = langText[language as keyof typeof langText]
 
   const handleLogout = () => {
+    logger.info("User logout", { userId }, "PATIENT_DASHBOARD")
     localStorage.clear()
     sessionStorage.clear()
     router.push("/")
@@ -138,6 +159,12 @@ export default function PatientDashboard() {
             {t.newConsultation}
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
 
         {/* Past Consultations */}
         <div>
