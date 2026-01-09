@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/crud"
+import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import * as bcrypt from "bcrypt"
@@ -19,33 +19,37 @@ export async function POST(request: NextRequest) {
 
     logger.info("Registration attempt", { email, role }, "AUTH")
 
-    const existingUser = await db.getUserByEmail(email)
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    })
+
     if (existingUser) {
       logger.warn("Registration failed: user already exists", { email }, "AUTH")
       return NextResponse.json({ message: "User already exists" }, { status: 400 })
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
-    const userId = await db.createUser({
-      email,
-      name,
-      passwordHash,
-      role,
-      ...(specialization && { specialization }),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        role: role.toUpperCase(),
+        specialization,
+      },
     })
 
-    const token = generateToken(userId)
+    const token = generateToken(user.id)
     const duration = Date.now() - startTime
 
-    logger.info("Registration successful", { userId, email, role, duration }, "AUTH")
+    logger.info("Registration successful", { userId: user.id, email, role, duration }, "AUTH")
 
     return NextResponse.json({
       token,
-      userId,
-      name,
-      role,
+      userId: user.id,
+      name: user.name,
+      role: user.role,
     })
   } catch (error) {
     const duration = Date.now() - startTime

@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/crud"
+import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import * as bcrypt from "bcrypt"
@@ -19,15 +19,15 @@ export async function POST(request: NextRequest) {
 
     logger.info("Login attempt", { email, role }, "AUTH")
 
-    // Fetch user from database
-    const user = await db.getUserByEmail(email)
+    const user = await prisma.user.findUnique({
+      where: { email },
+    })
 
     if (!user || user.role !== role) {
       logger.warn("Login failed: user not found or role mismatch", { email, role }, "AUTH")
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
     }
 
-    // Compare password hash
     const passwordMatch = await bcrypt.compare(password, user.passwordHash)
 
     if (!passwordMatch) {
@@ -35,14 +35,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
     }
 
-    const token = generateToken(user._id!)
+    const token = generateToken(user.id)
     const duration = Date.now() - startTime
 
-    logger.info("Login successful", { userId: user._id, email, role, duration }, "AUTH")
+    logger.info("Login successful", { userId: user.id, email, role, duration }, "AUTH")
 
     return NextResponse.json({
       token,
-      userId: user._id,
+      userId: user.id,
       name: user.name,
       role: user.role,
     })

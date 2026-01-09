@@ -1,6 +1,6 @@
+import { prisma } from "@/lib/db/prisma"
 import { runTriage } from "@/lib/ai/triage-engine"
 import { checkDDI } from "@/lib/ai/ddi-checker"
-import { db } from "@/lib/db/crud"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -23,61 +23,102 @@ export async function POST(request: NextRequest) {
       return !ddiAlerts.filter((a) => a.severity === "high").some((a) => a.drug1 === med.id || a.drug2 === med.id)
     })
 
-    const consultationData = {
-      patientId,
-      symptoms: triageResult.symptoms,
-      probableConditions: triageResult.probableConditions,
-      riskLevel: triageResult.riskLevel,
-      hasRedFlags: triageResult.hasRedFlags,
-      redFlagWarnings: triageResult.redFlagWarnings,
-      suggestedMedicines: safeMedicines,
-      ddiAlerts,
-      patientSummaryText: triageResult.patientSummaryText,
-      language,
-      status: "pending" as const,
-    }
+    const consultation = await prisma.consultation.create({
+      data: {
+        patientId,
+        symptoms: triageResult.symptoms,
+        riskLevel: triageResult.riskLevel.toUpperCase(),
+        hasRedFlags: triageResult.hasRedFlags,
+        redFlagWarnings: triageResult.redFlagWarnings,
+        patientSummaryText: triageResult.patientSummaryText,
+        language,
+        status: "PENDING",
 
-    const consultationId = await db.createConsultation(consultationData)
-
-    const blockchainRecord = await db.storeBlockchainRecord({
-      consultationId,
-      patientId,
-      dataHash: `0x${Math.random().toString(16).slice(2)}`, // Mock hash
-      txId: `0x${Math.random().toString(16).slice(2)}`,
-      blockNumber: Math.floor(Math.random() * 1000000),
-      timestamp: new Date(),
-      verified: true,
+        probableConditions: {
+          createMany: {
+            data: triageResult.probableConditions.map((pc) => ({
+              name: pc.name,
+              confidence: pc.confidence,
+              severity: pc.severity,
+            })),
+          },
+        },
+        suggestedMedicines: {
+          createMany: {
+            data: safeMedicines.map((med) => ({
+              medicineId: med.id,
+              name: med.name,
+              dose: med.dose,
+              frequency: med.frequency,
+              explanation: med.explanation,
+            })),
+          },
+        },
+        ddiAlerts: {
+          createMany: {
+            data: ddiAlerts.map((alert) => ({
+              drug1: alert.drug1,
+              drug2: alert.drug2,
+              severity: alert.severity.toUpperCase(),
+              description: alert.description,
+            })),
+          },
+        },
+        blockchainRecord: {
+          create: {
+            patientId,
+            dataHash: `0x${Math.random().toString(16).slice(2)}`,
+            txId: `0x${Math.random().toString(16).slice(2)}`,
+            blockNumber: Math.floor(Math.random() * 1000000),
+            timestamp: new Date(),
+            verified: true,
+          },
+        },
+        mlInferenceLog: {
+          create: {
+            patientId,
+            inputText,
+            language,
+            modelVersion: "1.0.0",
+            predictions: triageResult,
+            processingTime: Date.now() - startTime,
+            timestamp: new Date(),
+          },
+        },
+      },
+      include: {
+        blockchainRecord: true,
+        probableConditions: true,
+        suggestedMedicines: true,
+        ddiAlerts: true,
+      },
     })
 
     const duration = Date.now() - startTime
-    await db.logMLInference({
-      consultationId,
-      patientId,
-      inputText,
-      language,
-      modelVersion: "1.0.0",
-      predictions: triageResult,
-      processingTime: duration,
-      timestamp: new Date(),
-    })
 
-    logger.info("Consultation analysis completed", { consultationId, patientId, duration }, "CONSULTATION")
+    logger.info(
+      "Consultation analysis completed",
+      { consultationId: consultation.id, patientId, duration },
+      "CONSULTATION",
+    )
 
     return NextResponse.json({
-      consultationId,
-      symptoms: triageResult.symptoms,
-      probableConditions: triageResult.probableConditions,
-      riskLevel: triageResult.riskLevel,
-      hasRedFlags: triageResult.hasRedFlags,
-      redFlagWarnings: triageResult.redFlagWarnings,
-      suggestedMedicines: safeMedicines,
-      ddiAlerts,
-      patientSummaryText: triageResult.patientSummaryText,
-      blockchainProof: {
-        hash: blockchainRecord.dataHash,
-        timestamp: blockchainRecord.timestamp,
-        txId: blockchainRecord.txId,
-      },
+      consultationId: consultation.id,
+      symptoms: consultation.symptoms,
+      probableConditions: consultation.probableConditions,
+      riskLevel: consultation.riskLevel,
+      hasRedFlags: consultation.hasRedFlags,
+      redFlagWarnings: consultation.redFlagWarnings,
+      suggestedMedicines: consultation.suggestedMedicines,
+      ddiAlerts: consultation.ddiAlerts,
+      patientSummaryText: consultation.patientSummaryText,
+      blockchainProof: consultation.blockchainRecord
+        ? {
+            hash: consultation.blockchainRecord.dataHash,
+            timestamp: consultation.blockchainRecord.timestamp,
+            txId: consultation.blockchainRecord.txId,
+          }
+        : null,
     })
   } catch (error) {
     const duration = Date.now() - startTime

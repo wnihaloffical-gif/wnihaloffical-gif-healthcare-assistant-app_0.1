@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  email           String   @unique
+  name            String
+  passwordHash    String
+  role            Role
+  specialization  String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  consultationsAsPatient  Consultation[] @relation("PatientConsultations")
+  consultationsAsDoctor   Consultation[] @relation("DoctorConsultations")
+  auditLogs               AuditLog[]
+
+  @@map("users")
+}
+
+model Consultation {
+  id                    String   @id @default(auto()) @map("_id") @db.ObjectId
+  patientId             String   @db.ObjectId
+  doctorId              String?  @db.ObjectId
+  
+  symptoms              String[]
+  probableConditions    ProbableCondition[]
+  riskLevel             RiskLevel
+  hasRedFlags           Boolean  @default(false)
+  redFlagWarnings       String[]
+  suggestedMedicines    SuggestedMedicine[]
+  ddiAlerts             DDIAlert[]
+  patientSummaryText    String?
+  language              String   @default("English")
+  status                ConsultationStatus @default(PENDING)
+  
+  doctorNotes           String?
+  finalDiagnosis        String?
+  finalMedicines        String[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  patient               User     @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor                User?    @relation("DoctorConsultations", fields: [doctorId], references: [id], onDelete: SetNull)
+  blockchainRecord      BlockchainRecord?
+  mlInferenceLog        MLInferenceLog?
+  auditLogs             AuditLog[]
+
+  @@map("consultations")
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([status])
+}
+
+model ProbableCondition {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  consultationId String  @db.ObjectId
+  name         String
+  confidence   Float
+  severity     String
+
+  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@map("probable_conditions")
+}
+
+model SuggestedMedicine {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  consultationId String   @db.ObjectId
+  medicineId     String
+  name           String
+  dose           String
+  frequency      String
+  explanation    String
+
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@map("suggested_medicines")
+}
+
+model DDIAlert {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  consultationId String   @db.ObjectId
+  drug1          String
+  drug2          String
+  severity       DDISeverity
+  description    String
+
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@map("ddi_alerts")
+}
+
+model BlockchainRecord {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  consultationId  String   @unique @db.ObjectId
+  patientId       String   @db.ObjectId
+  dataHash        String
+  txId            String   @unique
+  blockNumber     Int
+  timestamp       DateTime
+  verified        Boolean  @default(true)
+
+  consultation    Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@map("blockchain_records")
+  @@index([patientId])
+}
+
+model MLInferenceLog {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  consultationId  String   @unique @db.ObjectId
+  patientId       String   @db.ObjectId
+  inputText       String
+  language        String
+  modelVersion    String
+  predictions     Json
+  processingTime  Int
+  timestamp       DateTime @default(now())
+
+  consultation    Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+
+  @@map("ml_inference_logs")
+  @@index([patientId])
+}
+
+model AuditLog {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  module       String
+  action       String
+  userId       String?  @db.ObjectId
+  resourceId   String?
+  timestamp    DateTime @default(now())
+  details      Json
+
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  consultation Consultation? @relation(fields: [resourceId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+  @@index([userId])
+  @@index([module])
+}
+
+// Enums
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ConsultationStatus {
+  PENDING
+  REVIEWED
+  COMPLETED
+}
+
+enum DDISeverity {
+  MILD
+  MODERATE
+  SEVERE
+}

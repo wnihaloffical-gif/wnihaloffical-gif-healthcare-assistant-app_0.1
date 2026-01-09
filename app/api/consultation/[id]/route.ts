@@ -1,4 +1,4 @@
-import { db } from "@/lib/db/crud"
+import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -8,18 +8,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     logger.info("Fetching consultation", { consultationId }, "CONSULTATION")
 
-    const consultation = await db.getConsultationById(consultationId)
+    const consultation = await prisma.consultation.findUnique({
+      where: { id: consultationId },
+      include: {
+        probableConditions: true,
+        suggestedMedicines: true,
+        ddiAlerts: true,
+        blockchainRecord: true,
+        mlInferenceLog: true,
+      },
+    })
 
     if (!consultation) {
       logger.warn("Consultation not found", { consultationId }, "CONSULTATION")
       return NextResponse.json({ message: "Consultation not found" }, { status: 404 })
     }
 
-    const blockchainRecord = await db.getBlockchainRecord(consultationId)
-
     return NextResponse.json({
       ...consultation,
-      blockchainProof: blockchainRecord || null,
+      blockchainProof: consultation.blockchainRecord || null,
     })
   } catch (error) {
     logger.error(
@@ -39,9 +46,24 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     logger.info("Updating consultation", { consultationId, updates }, "CONSULTATION")
 
-    await db.updateConsultation(consultationId, updates)
+    const updatedConsultation = await prisma.consultation.update({
+      where: { id: consultationId },
+      data: {
+        finalDiagnosis: updates.finalDiagnosis,
+        finalMedicines: updates.finalMedicines,
+        doctorNotes: updates.doctorNotes,
+        status: updates.status,
+      },
+      include: {
+        probableConditions: true,
+        suggestedMedicines: true,
+        ddiAlerts: true,
+      },
+    })
 
-    return NextResponse.json({ message: "Consultation updated successfully" })
+    logger.info("Consultation updated", { consultationId }, "CONSULTATION")
+
+    return NextResponse.json(updatedConsultation)
   } catch (error) {
     logger.error(
       "Failed to update consultation",
