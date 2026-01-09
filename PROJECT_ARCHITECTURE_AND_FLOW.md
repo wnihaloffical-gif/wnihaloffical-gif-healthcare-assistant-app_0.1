@@ -75,13 +75,13 @@
 - Logging all API operations
 
 **Environment Variables:**
-```env
+\`\`\`env
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
 BLOCKCHAIN_SERVICE_URL=http://localhost:8000
 NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:8002
 JWT_SECRET=your-secret-key
-```
+\`\`\`
 
 **Core API Endpoints:**
 
@@ -117,14 +117,14 @@ JWT_SECRET=your-secret-key
 - Log inference requests to database
 
 **Dependencies:**
-```
+\`\`\`
 fastapi==0.104.1
 uvicorn==0.24.0
 scikit-learn==1.3.2
 numpy==1.24.3
 pymongo==4.6.1
 python-dotenv==1.0.0
-```
+\`\`\`
 
 **Key Files:**
 - `app.py` - FastAPI application with endpoints
@@ -135,12 +135,12 @@ python-dotenv==1.0.0
 - `model_trainer.py` - Model training pipeline
 
 **Environment Variables:**
-```env
+\`\`\`env
 PORT=8002
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
 DEBUG=false
-```
+\`\`\`
 
 **API Endpoints:**
 - `GET /health` - Service health check
@@ -149,7 +149,7 @@ DEBUG=false
 - `GET /status` - Service status
 
 **Example Request:**
-```json
+\`\`\`json
 {
   "symptoms_text": "fever cough sore throat",
   "language": "english",
@@ -157,10 +157,10 @@ DEBUG=false
   "consultation_id": "cons-123",
   "patient_id": "patient-1"
 }
-```
+\`\`\`
 
 **Example Response:**
-```json
+\`\`\`json
 {
   "conditions": [
     {"condition": "Common Cold", "confidence": 0.82},
@@ -177,7 +177,7 @@ DEBUG=false
   "model_source": "ML Models v1.0.0",
   "processing_time": 0.234
 }
-```
+\`\`\`
 
 ---
 
@@ -192,13 +192,13 @@ DEBUG=false
 - Provide consultation proof
 
 **Dependencies:**
-```
+\`\`\`
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
 pymongo==4.6.1
 python-dotenv==1.0.0
-```
+\`\`\`
 
 **Key Files:**
 - `main.py` - FastAPI blockchain service
@@ -206,12 +206,12 @@ python-dotenv==1.0.0
 - `logger.py` - Structured logging
 
 **Environment Variables:**
-```env
+\`\`\`env
 PORT=8000
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
 DEBUG=false
-```
+\`\`\`
 
 **API Endpoints:**
 - `GET /` - Health check
@@ -222,16 +222,16 @@ DEBUG=false
 - `GET /blockchain/stats` - Blockchain statistics
 
 **Example Request:**
-```json
+\`\`\`json
 {
   "patient_id": "patient-1",
   "consultation_id": "cons-123",
   "consultation_summary": "Fever, cough, suspected common cold"
 }
-```
+\`\`\`
 
 **Example Response:**
-```json
+\`\`\`json
 {
   "success": true,
   "block": {
@@ -245,7 +245,7 @@ DEBUG=false
   "tx_id": "0x1a2b3c4d",
   "message": "Consultation recorded on blockchain. Block #1"
 }
-```
+\`\`\`
 
 ---
 
@@ -254,7 +254,7 @@ DEBUG=false
 ### MongoDB Collections
 
 #### 1. `users`
-```javascript
+\`\`\`javascript
 {
   "_id": "user-1",
   "email": "patient@example.com",
@@ -265,10 +265,10 @@ DEBUG=false
   "createdAt": ISODate("2024-01-01"),
   "updatedAt": ISODate("2024-01-15")
 }
-```
+\`\`\`
 
 #### 2. `consultations`
-```javascript
+\`\`\`javascript
 {
   "_id": "cons-123",
   "patientId": "patient-1",
@@ -308,10 +308,10 @@ DEBUG=false
   "createdAt": ISODate("2024-01-15"),
   "updatedAt": ISODate("2024-01-15")
 }
-```
+\`\`\`
 
 #### 3. `blockchain_records`
-```javascript
+\`\`\`javascript
 {
   "_id": ObjectId(),
   "consultationId": "cons-123",
@@ -328,10 +328,10 @@ DEBUG=false
     "previous_hash": "0x0000000..."
   }
 }
-```
+\`\`\`
 
 #### 4. `ml_inference_logs`
-```javascript
+\`\`\`javascript
 {
   "_id": ObjectId(),
   "consultationId": "cons-123",
@@ -347,10 +347,10 @@ DEBUG=false
   "processingTime": 234,  // milliseconds
   "timestamp": ISODate("2024-01-15")
 }
-```
+\`\`\`
 
 #### 5. `audit_logs`
-```javascript
+\`\`\`javascript
 {
   "_id": ObjectId(),
   "module": "AUTH|CONSULTATION|BLOCKCHAIN|ML",
@@ -364,7 +364,7 @@ DEBUG=false
     "status": "success|failure"
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -372,7 +372,7 @@ DEBUG=false
 
 ### Architecture Diagram (Textual)
 
-```
+\`\`\`
 ┌─────────────────────┐
 │   Frontend (React)  │
 │   Pages & Forms     │
@@ -404,11 +404,11 @@ DEBUG=false
     │ - Hash Data  │
     │ - Verify     │
     └──────────────┘
-```
+\`\`\`
 
 ### Data Flow: New Consultation
 
-```
+\`\`\`
 1. Patient starts consultation
    Frontend → POST /api/consultation/analyze
    {symptoms, language, currentMedicines, patientId}
@@ -441,7 +441,7 @@ DEBUG=false
    - Shows analysis
    - Displays blockchain proof
    - Logs user action
-```
+\`\`\`
 
 ---
 
@@ -451,7 +451,7 @@ DEBUG=false
 
 Every log entry follows this structure:
 
-```json
+\`\`\`json
 {
   "timestamp": "2024-01-15T10:30:00.000Z",
   "level": "info|warn|error|debug",
@@ -465,43 +465,43 @@ Every log entry follows this structure:
   },
   "error": "Error message if level=error"
 }
-```
+\`\`\`
 
 ### Logging Across Modules
 
 #### Frontend Logging
-```typescript
+\`\`\`typescript
 // lib/db/logger.ts
 logger.info("User clicked new consultation", {}, "PATIENT_DASHBOARD")
 logger.error("Failed to fetch consultations", {patientId}, "PATIENT_DASHBOARD", errorMsg)
-```
+\`\`\`
 
 #### Backend Logging
-```typescript
+\`\`\`typescript
 // app/api/consultation/analyze/route.ts
 logger.info("Consultation analysis started", {patientId, language}, "CONSULTATION")
 logger.info("Analysis completed", {consultationId, duration}, "CONSULTATION")
-```
+\`\`\`
 
 #### ML Service Logging
-```python
+\`\`\`python
 # ml-service/app.py
 logger.info("Inference request received", {
     "symptoms_length": len(symptoms),
     "language": language,
     "patient_id": patient_id
 }, "INFERENCE")
-```
+\`\`\`
 
 #### Blockchain Service Logging
-```python
+\`\`\`python
 # blockchain-service/main.py
 logger.info("Block added to blockchain", {
     "block_index": block.index,
     "consultation_id": consultation_id,
     "patient_id": patient_id
 }, "BLOCKCHAIN")
-```
+\`\`\`
 
 ### Centralized Log Aggregation (Future)
 
@@ -516,7 +516,7 @@ Logs are currently printed to stdout. For production:
 
 ### Complete Flow: Patient Logs In and Starts Consultation
 
-```
+\`\`\`
 STEP 1: PATIENT LOGIN
 ├─ Frontend: User enters credentials
 ├─ Frontend: POST /api/auth/login {email, password, role}
@@ -587,7 +587,7 @@ STEP 8: FRONTEND DISPLAYS RESULTS
 ├─ Frontend: Show blockchain verification badge
 ├─ Frontend Logger: {timestamp, module: CONSULTATION, action: VIEW_RESULTS}
 └─ Patient: Can save consultation or request doctor review
-```
+\`\`\`
 
 ---
 
@@ -602,16 +602,16 @@ STEP 8: FRONTEND DISPLAYS RESULTS
 
 ### Step 1: Clone Repository
 
-```bash
+\`\`\`bash
 git clone <repository-url>
 cd healthcare-assistant-app
-```
+\`\`\`
 
 ### Step 2: Setup Environment Variables
 
 Create `.env.local` in project root:
 
-```env
+\`\`\`env
 # Database
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
@@ -627,27 +627,27 @@ JWT_EXPIRY=24h
 # Debug
 DEBUG=false
 LOG_LEVEL=info
-```
+\`\`\`
 
 ### Step 3: Install Frontend Dependencies
 
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 ### Step 4: Start MongoDB
 
-```bash
+\`\`\`bash
 # If using Docker
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 
 # Or if MongoDB is installed locally
 mongod
-```
+\`\`\`
 
 ### Step 5: Install & Start ML Service
 
-```bash
+\`\`\`bash
 cd ml-service
 pip install -r requirements.txt
 
@@ -666,11 +666,11 @@ python model_trainer.py
 # Start ML service
 python app.py
 # Service will run on http://localhost:8002
-```
+\`\`\`
 
 ### Step 6: Install & Start Blockchain Service
 
-```bash
+\`\`\`bash
 cd blockchain-service
 pip install -r requirements.txt
 
@@ -685,15 +685,15 @@ EOF
 # Start blockchain service
 python main.py
 # Service will run on http://localhost:8000
-```
+\`\`\`
 
 ### Step 7: Start Frontend & Backend
 
-```bash
+\`\`\`bash
 # From project root
 npm run dev
 # Frontend will run on http://localhost:3000
-```
+\`\`\`
 
 ### Step 8: Test the Application
 
@@ -710,47 +710,47 @@ npm run dev
 ### Database Connection
 
 **Development (Local MongoDB):**
-```env
+\`\`\`env
 MONGODB_URI=mongodb://localhost:27017
-```
+\`\`\`
 
 **Production (MongoDB Atlas):**
-```env
+\`\`\`env
 MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority
-```
+\`\`\`
 
 ### Service URLs
 
 **Development:**
-```env
+\`\`\`env
 BLOCKCHAIN_SERVICE_URL=http://localhost:8000
 NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:8002
-```
+\`\`\`
 
 **Production:**
-```env
+\`\`\`env
 BLOCKCHAIN_SERVICE_URL=https://blockchain.yourdomain.com
 NEXT_PUBLIC_ML_SERVICE_URL=https://ml.yourdomain.com
-```
+\`\`\`
 
 ### JWT Configuration
 
-```env
+\`\`\`env
 # Secret should be a long random string
 JWT_SECRET=your-production-secret-change-this
 
 # Token expiry
 JWT_EXPIRY=24h  # or 7d, 30d, etc
-```
+\`\`\`
 
 ### Logging Levels
 
-```env
+\`\`\`env
 LOG_LEVEL=debug    # Shows all logs
 LOG_LEVEL=info     # Info, warn, error
 LOG_LEVEL=warn     # Warn, error only
 LOG_LEVEL=error    # Errors only
-```
+\`\`\`
 
 ---
 

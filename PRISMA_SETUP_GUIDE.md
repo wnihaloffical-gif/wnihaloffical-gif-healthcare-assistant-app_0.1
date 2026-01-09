@@ -11,7 +11,7 @@ This application now uses **Prisma ORM** with MongoDB for automatic schema manag
 
 ### 2. Setup Database (Automatic)
 
-```bash
+\`\`\`bash
 # Run the setup script - this does everything automatically
 npm run db:setup
 
@@ -20,7 +20,7 @@ npm install                    # Install dependencies
 npx prisma generate          # Generate Prisma Client
 npx prisma db push           # Create all tables in MongoDB
 npm run db:seed              # Seed with default users
-```
+\`\`\`
 
 ### 3. What Gets Created Automatically
 
@@ -39,29 +39,29 @@ When you run `npm run db:setup`, the following collections are created in MongoD
 
 After setup, you can login with:
 
-```
+\`\`\`
 Patient:  patient@example.com / password123
 Doctor:   doctor@example.com / password123
 Admin:    admin@example.com / password123
-```
+\`\`\`
 
 ## Usage in API Routes
 
 Before (Raw MongoDB):
-```typescript
+\`\`\`typescript
 const user = await db.getUserByEmail(email)
-```
+\`\`\`
 
 After (Prisma):
-```typescript
+\`\`\`typescript
 const user = await prisma.user.findUnique({
   where: { email },
 })
-```
+\`\`\`
 
 ## Useful Commands
 
-```bash
+\`\`\`bash
 # View/edit database in browser UI
 npm run db:studio
 
@@ -76,21 +76,21 @@ npx prisma generate
 
 # Reset entire database (WARNING: deletes all data)
 npx prisma db push --skip-generate --force-reset
-```
+\`\`\`
 
 ## Environment Variables
 
 Required in `.env.local`:
 
-```
+\`\`\`
 MONGODB_URI=mongodb://localhost:27017/aarogyaguard
 JWT_SECRET=your-secret-key
 JWT_EXPIRY=24h
-```
+\`\`\`
 
 ## Schema Relationships
 
-```
+\`\`\`
 User (1) ──→ (Many) Consultation (Patient)
 User (1) ──→ (Many) Consultation (Doctor)
 Consultation (1) ──→ (Many) ProbableConditions
@@ -98,7 +98,7 @@ Consultation (1) ──→ (Many) SuggestedMedicines
 Consultation (1) ──→ (Many) DDIAlerts
 Consultation (1) ──→ (1) BlockchainRecord
 Consultation (1) ──→ (1) MLInferenceLog
-```
+\`\`\`
 
 ## Troubleshooting
 

@@ -7,19 +7,19 @@ AarogyaGuard has been successfully migrated from raw MongoDB to **Prisma ORM**. 
 ## What Changed
 
 ### Before (Raw MongoDB)
-```typescript
+\`\`\`typescript
 // lib/db/crud.ts - Manual MongoDB operations
 const db = await getDatabase()
 const user = await db.collection('users').findOne({ email })
-```
+\`\`\`
 
 ### After (Prisma ORM)
-```typescript
+\`\`\`typescript
 // Using Prisma Client
 const user = await prisma.user.findUnique({
   where: { email },
 })
-```
+\`\`\`
 
 ## Files Updated
 
@@ -53,7 +53,7 @@ const user = await prisma.user.findUnique({
 
 All these collections are created automatically by Prisma:
 
-```
+\`\`\`
 users
 ├── id (primary)
 ├── email (unique)
@@ -127,11 +127,11 @@ audit_logs
 ├── userId (nullable foreign key → users)
 ├── timestamp
 └── details (JSON)
-```
+\`\`\`
 
 ## Quick Setup
 
-```bash
+\`\`\`bash
 # Complete one-command setup
 npm run db:setup
 
@@ -146,16 +146,16 @@ npm run db:check
 
 # Start application
 npm run dev
-```
+\`\`\`
 
 ## Default Test Users
 
 After setup:
-```
+\`\`\`
 Email: patient@example.com     | Password: password123 | Role: PATIENT
 Email: doctor@example.com      | Password: password123 | Role: DOCTOR
 Email: admin@example.com       | Password: password123 | Role: ADMIN
-```
+\`\`\`
 
 ## Key Benefits of Prisma Migration
 
@@ -170,23 +170,23 @@ Email: admin@example.com       | Password: password123 | Role: ADMIN
 
 These files are no longer used after migration:
 
-```
+\`\`\`
 lib/db/crud.ts              (Old MongoDB CRUD operations)
 lib/db/mongodb.ts           (Old MongoDB connection logic)
 lib/db/schemas.ts           (Old TypeScript interfaces)
 lib/db-seed.ts              (Old seed logic - replaced by scripts/seed-db.ts)
-```
+\`\`\`
 
 If you want to clean up, delete these files. Prisma handles everything now.
 
 ## Environment Variables Required
 
 Add to `.env.local`:
-```
+\`\`\`
 DATABASE_URL=mongodb://localhost:27017/aarogyaguard
 JWT_SECRET=your-secret-key-change-in-production
 JWT_EXPIRY=24h
-```
+\`\`\`
 
 ## Next Steps
 
