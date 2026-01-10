@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic"
+
 const BLOCKCHAIN_SERVICE_URL = process.env.BLOCKCHAIN_SERVICE_URL || "http://localhost:8000"
 
 export async function GET(request: NextRequest) {

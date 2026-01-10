@@ -7,7 +7,7 @@ const nextConfig = {
     unoptimized: true,
   },
   // reactCompiler: true,
-  cacheComponents: true,
+  cacheComponents: false,
 }
 
 export default nextConfig

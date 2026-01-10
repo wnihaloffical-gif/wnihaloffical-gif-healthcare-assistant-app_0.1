@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic"
+
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import type { Consultation } from "@/lib/types"

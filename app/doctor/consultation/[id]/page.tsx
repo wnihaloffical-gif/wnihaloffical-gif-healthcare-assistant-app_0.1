@@ -1,6 +1,9 @@
 "use client"
 
+import type { Metadata } from "next"
 import { useParams, useRouter } from "next/navigation"
+
+export const dynamic = "force-dynamic"
 import { useEffect, useState } from "react"
 import type { Consultation } from "@/lib/types"
 import DoctorConsultationReview from "@/components/doctor/consultation-review"

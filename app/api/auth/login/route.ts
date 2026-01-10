@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
-import * as bcrypt from "bcrypt"
+import * as bcrypt from "bcryptjs"
 import * as jwt from "jsonwebtoken"
 
 function generateToken(userId: string): string {
