@@ -7,9 +7,15 @@ async function main() {
   try {
     console.log("[SEED] Starting database seeding...")
 
-    // Clear existing users
+    await prisma.auditLog.deleteMany({})
+    await prisma.mlInferenceLog.deleteMany({})
+    await prisma.blockchainRecord.deleteMany({})
+    await prisma.ddiAlert.deleteMany({})
+    await prisma.suggestedMedicine.deleteMany({})
+    await prisma.probableCondition.deleteMany({})
+    await prisma.consultation.deleteMany({})
     await prisma.user.deleteMany({})
-    console.log("[SEED] Cleared existing users")
+    console.log("[SEED] Cleared existing data")
 
     // Hash passwords using bcryptjs (same as login API)
     const patientPassword = await bcryptjs.hash("patient123", 10)
