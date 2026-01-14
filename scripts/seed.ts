@@ -7,6 +7,7 @@ async function main() {
   try {
     console.log("[SEED] Starting database seeding...")
 
+    // Sequential deletes work fine for seeding
     await prisma.auditLog.deleteMany({})
     await prisma.mlInferenceLog.deleteMany({})
     await prisma.blockchainRecord.deleteMany({})
