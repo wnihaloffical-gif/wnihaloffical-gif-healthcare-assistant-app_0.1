@@ -1,0 +1,190 @@
+@startuml AarogyaGuard Architecture
+
+!define AWSPUML https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/v18.0/dist
+!include AWSPUML/AWSCommon.puml
+!include AWSPUML/Compute/EC2.puml
+!include AWSPUML/Database/DynamoDB.puml
+!include AWSPUML/Compute/Lambda.puml
+!include AWSPUML/MachineLearning/SageMaker.puml
+
+title AarogyaGuard Healthcare System Architecture
+
+' Define actors
+actor "Patient" as Patient
+actor "Doctor" as Doctor
+actor "Admin" as Admin
+
+' Define main components
+package "Frontend Layer" as Frontend {
+    rectangle "Next.js React App" as NextJS
+    rectangle "Patient Dashboard" as PatientUI
+    rectangle "Doctor Dashboard" as DoctorUI
+    rectangle "Admin Dashboard" as AdminUI
+    rectangle "Voice Recorder" as VoiceComp
+}
+
+package "Backend Layer" as Backend {
+    rectangle "Next.js API Routes" as APIRoutes
+    rectangle "Authentication" as Auth
+    rectangle "Consultation Orchestrator" as Orchestrator
+    rectangle "Database Layer" as DBLayer
+}
+
+package "Service Layer" as Services {
+    rectangle "ML Service\n(FastAPI)" as MLService
+    rectangle "Blockchain Service\n(FastAPI)" as BlockchainService
+}
+
+database "MongoDB" as MongoDB {
+    rectangle "Users Collection" as Users
+    rectangle "Consultations Collection" as Consultations
+    rectangle "Blockchain Records" as BlockchainRecords
+    rectangle "ML Inference Logs" as MLLogs
+    rectangle "Audit Logs" as AuditLogs
+}
+
+' ML Service components
+package "ML Service Components" as MLComponents {
+    rectangle "Symptom Extractor" as SymptomExtractor
+    rectangle "Triage Engine" as TriageEngine
+    rectangle "DDI Checker" as DDIChecker
+    rectangle "Inference Engine" as InferenceEngine
+}
+
+' Blockchain Service components
+package "Blockchain Components" as BlockchainComponents {
+    rectangle "Hash Generator" as HashGenerator
+    rectangle "Block Creator" as BlockCreator
+    rectangle "Chain Validator" as ChainValidator
+}
+
+' Define relationships
+Patient --> PatientUI : Uses
+Doctor --> DoctorUI : Uses
+Admin --> AdminUI : Uses
+
+PatientUI --> NextJS : Renders
+DoctorUI --> NextJS : Renders
+AdminUI --> NextJS : Renders
+VoiceComp --> NextJS : Integrated
+
+NextJS --> APIRoutes : HTTP Requests
+
+APIRoutes --> Auth : Authentication
+APIRoutes --> Orchestrator : Business Logic
+Orchestrator --> DBLayer : CRUD Operations
+
+Orchestrator --> MLService : Symptom Analysis
+Orchestrator --> BlockchainService : Record Storage
+
+MLService --> SymptomExtractor : Process Symptoms
+MLService --> TriageEngine : Risk Assessment
+MLService --> DDIChecker : Drug Interactions
+MLService --> InferenceEngine : ML Predictions
+
+BlockchainService --> HashGenerator : Generate Hashes
+BlockchainService --> BlockCreator : Create Blocks
+BlockchainService --> ChainValidator : Verify Integrity
+
+DBLayer --> MongoDB : Database Operations
+MLService --> MongoDB : Log Inference
+BlockchainService --> MongoDB : Store Records
+
+MongoDB --> Users : User Data
+MongoDB --> Consultations : Consultation Data
+MongoDB --> BlockchainRecords : Immutable Proofs
+MongoDB --> MLLogs : ML Predictions
+MongoDB --> AuditLogs : System Logs
+
+' Data flow for consultation
+== Consultation Flow ==
+
+Patient -> PatientUI : Start Consultation
+PatientUI -> VoiceComp : Record Symptoms
+VoiceComp -> NextJS : Process Audio
+NextJS -> APIRoutes : POST /api/consultation/analyze
+
+APIRoutes -> Auth : Verify User
+Auth -> DBLayer : Check User
+DBLayer -> MongoDB : Query User
+
+APIRoutes -> Orchestrator : Process Request
+Orchestrator -> MLService : Analyze Symptoms
+
+MLService -> SymptomExtractor : Extract Features
+SymptomExtractor -> InferenceEngine : Predict Conditions
+InferenceEngine -> TriageEngine : Assess Risk
+TriageEngine -> DDIChecker : Check Interactions
+
+DDIChecker -> MLService : Return DDI Results
+MLService -> Orchestrator : Return Analysis
+
+Orchestrator -> DBLayer : Create Consultation
+DBLayer -> MongoDB : Store Consultation
+
+Orchestrator -> BlockchainService : Record on Blockchain
+BlockchainService -> HashGenerator : Hash Data
+HashGenerator -> BlockCreator : Create Block
+BlockCreator -> ChainValidator : Validate Chain
+ChainValidator -> BlockchainService : Return Proof
+
+BlockchainService -> DBLayer : Store Proof
+DBLayer -> MongoDB : Store Blockchain Record
+
+Orchestrator -> APIRoutes : Return Results
+APIRoutes -> NextJS : Send Response
+NextJS -> PatientUI : Display Results
+
+' Doctor review flow
+== Doctor Review Flow ==
+
+Doctor -> DoctorUI : Review Cases
+DoctorUI -> NextJS : Load Consultations
+NextJS -> APIRoutes : GET /api/consultation/[id]
+
+APIRoutes -> Orchestrator : Get Consultation
+Orchestrator -> DBLayer : Query Database
+DBLayer -> MongoDB : Fetch Data
+
+MongoDB -> DBLayer : Return Data
+DBLayer -> Orchestrator : Process Data
+Orchestrator -> APIRoutes : Return Consultation
+
+APIRoutes -> NextJS : Send Data
+NextJS -> DoctorUI : Display Consultation
+
+Doctor -> DoctorUI : Add Notes/Update
+DoctorUI -> NextJS : Submit Changes
+NextJS -> APIRoutes : PUT /api/consultation/[id]
+
+APIRoutes -> Orchestrator : Update Consultation
+Orchestrator -> DBLayer : Update Database
+DBLayer -> MongoDB : Update Record
+
+' Admin monitoring
+== Admin Monitoring ==
+
+Admin -> AdminUI : View Analytics
+AdminUI -> NextJS : Load Dashboard
+NextJS -> APIRoutes : GET /api/analytics/*
+
+APIRoutes -> Orchestrator : Get Metrics
+Orchestrator -> DBLayer : Query Analytics
+DBLayer -> MongoDB : Aggregate Data
+
+MongoDB -> DBLayer : Return Metrics
+DBLayer -> Orchestrator : Process Metrics
+Orchestrator -> APIRoutes : Return Analytics
+
+APIRoutes -> NextJS : Send Data
+NextJS -> AdminUI : Display Charts
+
+' Logging flow
+== Logging & Monitoring ==
+
+APIRoutes --> AuditLogs : API Logs
+MLService --> MLLogs : Inference Logs
+BlockchainService --> BlockchainRecords : Block Logs
+DBLayer --> AuditLogs : Database Logs
+
+@enduml
