@@ -19,9 +19,12 @@ contract ConsultationRegistry {
 
     // Mapping from consultation ID to record
     mapping(bytes32 => ConsultationRecord) public consultations;
-    
+
     // Mapping from patient address to consultation IDs
     mapping(address => bytes32[]) public patientConsultations;
+
+    // Total consultation counter
+    uint256 public consultationCount;
 
     // Events
     event ConsultationRecorded(
@@ -42,6 +45,7 @@ contract ConsultationRegistry {
 
     /**
      * Record a consultation on blockchain
+     * Each consultationId is immutable once stored
      */
     function recordConsultation(
         bytes32 consultationId,
@@ -49,7 +53,16 @@ contract ConsultationRegistry {
         bytes32 resultHash,
         string memory metadataURI
     ) public {
-        require(consultationHash != 0, "Consultation hash cannot be empty");
+        require(
+            consultationHash != bytes32(0),
+            "Consultation hash cannot be empty"
+        );
+
+        // Prevent overwriting existing records
+        require(
+            consultations[consultationId].timestamp == 0,
+            "Consultation already exists"
+        );
 
         ConsultationRecord memory record = ConsultationRecord({
             consultationHash: consultationHash,
@@ -62,8 +75,14 @@ contract ConsultationRegistry {
 
         consultations[consultationId] = record;
         patientConsultations[msg.sender].push(consultationId);
+        consultationCount++;
 
-        emit ConsultationRecorded(consultationId, consultationHash, msg.sender, block.timestamp);
+        emit ConsultationRecorded(
+            consultationId,
+            consultationHash,
+            msg.sender,
+            block.timestamp
+        );
     }
 
     /**
@@ -80,30 +99,25 @@ contract ConsultationRegistry {
     /**
      * Get all consultations for a patient
      */
-    function getPatientConsultations(address patient)
-        public
-        view
-        returns (bytes32[] memory)
-    {
+    function getPatientConsultations(
+        address patient
+    ) public view returns (bytes32[] memory) {
         return patientConsultations[patient];
     }
 
     /**
      * Get consultation details
      */
-    function getConsultationDetails(bytes32 consultationId)
-        public
-        view
-        returns (ConsultationRecord memory)
-    {
+    function getConsultationDetails(
+        bytes32 consultationId
+    ) public view returns (ConsultationRecord memory) {
         return consultations[consultationId];
     }
 
     /**
-     * Get number of consultations
+     * Get total number of consultations
      */
     function getConsultationCount() public view returns (uint256) {
-        // This would need to be tracked separately in production
-        return 0;
+        return consultationCount;
     }
 }
