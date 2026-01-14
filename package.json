@@ -7,7 +7,7 @@
     "build": "next build",
     "db:check": "ts-node scripts/check-db.ts",
     "db:push": "prisma db push",
-    "db:seed": "node scripts/seed-db.js",
+    "db:seed": "ts-node scripts/seed.ts",
     "db:setup": "bash scripts/setup-db.sh",
     "db:studio": "prisma studio",
     "dev": "next dev",
