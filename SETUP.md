@@ -6,7 +6,7 @@
 
 Create `.env.local` in the project root:
 
-```env
+\`\`\`env
 MONGODB_URI=mongodb://localhost:27017/aarogyaguard
 MONGODB_DB_NAME=aarogyaguard
 JWT_SECRET=dev-secret-key-change-in-production
@@ -15,29 +15,29 @@ BLOCKCHAIN_SERVICE_URL=http://localhost:8000
 NEXT_PUBLIC_ML_SERVICE_URL=http://localhost:8002
 DEBUG=true
 NODE_ENV=development
-```
+\`\`\`
 
 Create `blockchain-service/.env`:
 
-```env
+\`\`\`env
 PORT=8000
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
 DEBUG=false
-```
+\`\`\`
 
 Create `ml-service/.env`:
 
-```env
+\`\`\`env
 PORT=8002
 MONGODB_URI=mongodb://localhost:27017
 MONGODB_DB_NAME=aarogyaguard
 DEBUG=false
-```
+\`\`\`
 
 ### 2. Install Dependencies
 
-```bash
+\`\`\`bash
 # Frontend
 npm install
 
@@ -50,13 +50,13 @@ cd ..
 cd ml-service
 pip install -r requirements.txt
 cd ..
-```
+\`\`\`
 
 ### 3. Setup Database
 
 MongoDB must be running on `mongodb://localhost:27017`
 
-```bash
+\`\`\`bash
 # Generate Prisma client
 npx prisma generate
 
@@ -65,33 +65,33 @@ npx prisma db push --skip-generate --force-reset
 
 # Seed test users
 npm run db:seed
-```
+\`\`\`
 
 ## Running the Application
 
 ### Terminal 1: Blockchain Service
 
-```bash
+\`\`\`bash
 cd blockchain-service
 python main.py
-```
+\`\`\`
 
 Expected: `INFO: Uvicorn running on http://127.0.0.1:8000`
 
 ### Terminal 2: ML Service
 
-```bash
+\`\`\`bash
 cd ml-service
 python app.py
-```
+\`\`\`
 
 Expected: `INFO: Uvicorn running on http://0.0.0.0:8002`
 
 ### Terminal 3: Frontend
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
 Expected: `Ready in X.Xs` - Open http://localhost:3000
 

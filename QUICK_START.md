@@ -8,9 +8,9 @@
 ## Start MongoDB
 
 **Windows/macOS/Linux:**
-```bash
+\`\`\`bash
 mongod
-```
+\`\`\`
 
 Keep this terminal open. MongoDB runs on `mongodb://localhost:27017`
 
@@ -18,36 +18,36 @@ Keep this terminal open. MongoDB runs on `mongodb://localhost:27017`
 
 ### Terminal 1: Frontend
 
-```bash
+\`\`\`bash
 npm install
 npm run dev
-```
+\`\`\`
 
 Open http://localhost:3000
 
 ### Terminal 2: Blockchain Service
 
-```bash
+\`\`\`bash
 cd blockchain-service
 pip install -r requirements.txt
 python main.py
-```
+\`\`\`
 
 ### Terminal 3: ML Service
 
-```bash
+\`\`\`bash
 cd ml-service
 pip install -r requirements.txt
 python app.py
-```
+\`\`\`
 
 ### Terminal 4: Database Setup (One-time)
 
-```bash
+\`\`\`bash
 npx prisma generate
 npx prisma db push --skip-generate --force-reset
 npm run db:seed
-```
+\`\`\`
 
 ## Login
 
