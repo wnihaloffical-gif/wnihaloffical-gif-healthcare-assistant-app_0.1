@@ -3,6 +3,15 @@ import { runTriage } from "@/lib/ai/triage-engine"
 import { checkDDI } from "@/lib/ai/ddi-checker"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
+import crypto from "crypto"
+import { generateConsultationHash } from "@/lib/utils/hash-generator" // Declare the variable here
+
+// ============================================================================
+// DETERMINISTIC HASH GENERATION FOR DATA INTEGRITY
+// ============================================================================
+// This function generates a SHA-256 hash from consultation data
+// If ANY field changes (symptoms, diagnosis, medicines, etc), hash MUST change
+// This ensures tamper-proof records on blockchain
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
@@ -67,7 +76,13 @@ export async function POST(request: NextRequest) {
         blockchainRecord: {
           create: {
             patientId,
-            dataHash: `0x${Math.random().toString(16).slice(2)}`,
+            dataHash: generateConsultationHash({
+              symptoms: triageResult.symptoms,
+              conditions: triageResult.probableConditions,
+              medicines: safeMedicines,
+              riskLevel: triageResult.riskLevel,
+              redFlags: triageResult.redFlagWarnings,
+            }),
             txId: `0x${Math.random().toString(16).slice(2)}`,
             blockNumber: Math.floor(Math.random() * 1000000),
             timestamp: new Date(),

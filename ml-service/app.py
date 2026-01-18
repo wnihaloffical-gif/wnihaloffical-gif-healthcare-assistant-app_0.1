@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from datetime import datetime
+from contextlib import asynccontextmanager
 from inference_engine import InferenceEngine
 from logger import logger
 from db_client import db_client
@@ -15,7 +16,27 @@ import json
 import os
 import time
 
-app = FastAPI(title="AarogyaGuard ML Service", version="1.0.0")
+# Initialize components
+engine = InferenceEngine()
+
+# ============================================================================
+# FastAPI Lifespan Manager (replaces deprecated on_event)
+# ============================================================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    db_client.connect()
+    logger.info("ML Service started", module="APP")
+    yield
+    # Shutdown
+    db_client.disconnect()
+    logger.info("ML Service shut down", module="APP")
+
+app = FastAPI(
+    title="AarogyaGuard ML Service", 
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 # Enable CORS
 app.add_middleware(
@@ -25,20 +46,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Initialize components
-engine = InferenceEngine()
-
-# Connect to database on startup
-@app.on_event("startup")
-async def startup_event():
-    db_client.connect()
-    logger.info("ML Service started", module="APP")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    db_client.disconnect()
-    logger.info("ML Service shut down", module="APP")
 
 
 class AnalysisRequest(BaseModel):

@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
+from contextlib import asynccontextmanager
 import hashlib
 import json
 import uvicorn
@@ -10,7 +11,24 @@ import os
 from logger import logger
 from db_client import db_client
 
-app = FastAPI(title="AarogyaGuard Blockchain Service", version="1.0.0")
+# ============================================================================
+# FastAPI Lifespan Manager (replaces deprecated on_event)
+# ============================================================================
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    db_client.connect()
+    logger.info("Blockchain Service started", module="APP")
+    yield
+    # Shutdown
+    db_client.disconnect()
+    logger.info("Blockchain Service shut down", module="APP")
+
+app = FastAPI(
+    title="AarogyaGuard Blockchain Service", 
+    version="1.0.0",
+    lifespan=lifespan
+)
 
 # Enable CORS for Next.js communication
 app.add_middleware(
@@ -20,17 +38,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Connect to database on startup
-@app.on_event("startup")
-async def startup_event():
-    db_client.connect()
-    logger.info("Blockchain Service started", module="APP")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    db_client.disconnect()
-    logger.info("Blockchain Service shut down", module="APP")
 
 
 # ============================================================================
