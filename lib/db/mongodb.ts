@@ -1,59 +1,40 @@
-import { MongoClient, type Db, type MongoClientOptions } from "mongodb"
+// This file is kept for backward compatibility but now uses Prisma for MySQL
+// All database operations should use Prisma Client instead
 import { logger } from "./logger"
+import { prisma } from "./prisma"
 
-let cachedClient: MongoClient | null = null
-let cachedDb: Db | null = null
-
-const mongoUri = process.env.MONGODB_URI || "mongodb://localhost:27017"
-const dbName = process.env.MONGODB_DB_NAME || "aarogyaguard"
-
-export async function connectToDatabase(): Promise<{ client: MongoClient; db: Db }> {
-  if (cachedClient && cachedDb) {
-    logger.info("Using cached MongoDB connection")
-    return { client: cachedClient, db: cachedDb }
-  }
-
+export async function connectToDatabase() {
   try {
-    const options: MongoClientOptions = {
-      retryWrites: true,
-      w: "majority",
-    }
-
-    const client = new MongoClient(mongoUri, options)
-    await client.connect()
-
-    const db = client.db(dbName)
-
-    // Verify connection
-    await db.admin().ping()
-    logger.info("Connected to MongoDB successfully", { dbName })
-
-    cachedClient = client
-    cachedDb = db
-
-    return { client, db }
+    await prisma.$connect()
+    logger.info("Connected to MySQL database successfully")
+    return { client: null, db: null }
   } catch (error) {
-    logger.error("Failed to connect to MongoDB", {
+    logger.error("Failed to connect to MySQL database", {
       error: error instanceof Error ? error.message : String(error),
-      mongoUri: mongoUri.split("@")[0] + "@***", // Mask password
     })
     throw error
   }
 }
 
 export async function disconnectDatabase(): Promise<void> {
-  if (cachedClient) {
-    await cachedClient.close()
-    cachedClient = null
-    cachedDb = null
-    logger.info("Disconnected from MongoDB")
+  try {
+    await prisma.$disconnect()
+    logger.info("Disconnected from MySQL database")
+  } catch (error) {
+    logger.error("Failed to disconnect from MySQL database", {
+      error: error instanceof Error ? error.message : String(error),
+    })
   }
 }
 
-export async function getDatabase(): Promise<Db> {
-  if (!cachedDb) {
-    const { db } = await connectToDatabase()
-    return db
+export async function getDatabase() {
+  try {
+    await prisma.$connect()
+    return prisma
+  } catch (error) {
+    logger.error("Failed to get database connection", {
+      error: error instanceof Error ? error.message : String(error),
+    })
+    throw error
   }
-  return cachedDb
 }
