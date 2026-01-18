@@ -4,27 +4,53 @@ import { type NextRequest, NextResponse } from "next/server"
 import * as bcrypt from "bcryptjs"
 import * as jwt from "jsonwebtoken"
 
-function generateToken(userId: string): string {
+// --------------------
+// JWT helper
+// --------------------
+function generateToken(userId: number): string {
   const secret = process.env.JWT_SECRET || "dev-secret-key"
   const expiresIn = process.env.JWT_EXPIRY || "24h"
 
-  return jwt.sign({ userId }, secret, { expiresIn })
+  return jwt.sign({ userId }, secret as string, { expiresIn })
 }
 
+// --------------------
+// LOGIN API
+// --------------------
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
   try {
     const { email, password, role } = await request.json()
 
-    logger.info("Login attempt", { email, role }, "AUTH")
+    if (!email || !password || !role) {
+      return NextResponse.json(
+        { message: "Email, password, and role are required" },
+        { status: 400 }
+      )
+    }
+
+    const normalizedRole = String(role).toUpperCase()
+
+    const allowedRoles = ["PATIENT", "DOCTOR", "ADMIN"]
+
+    if (!allowedRoles.includes(normalizedRole)) {
+      logger.warn("Login failed: invalid role", { email, role }, "AUTH")
+      return NextResponse.json({ message: "Invalid role" }, { status: 400 })
+    }
+
+    logger.info("Login attempt", { email, role: normalizedRole }, "AUTH")
 
     const user = await prisma.user.findUnique({
       where: { email },
     })
 
-    if (!user || user.role !== role) {
-      logger.warn("Login failed: user not found or role mismatch", { email, role }, "AUTH")
+    if (!user || user.role !== normalizedRole) {
+      logger.warn(
+        "Login failed: user not found or role mismatch",
+        { email, role: normalizedRole },
+        "AUTH"
+      )
       return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
     }
 
@@ -38,7 +64,11 @@ export async function POST(request: NextRequest) {
     const token = generateToken(user.id)
     const duration = Date.now() - startTime
 
-    logger.info("Login successful", { userId: user.id, email, role, duration }, "AUTH")
+    logger.info(
+      "Login successful",
+      { userId: user.id, email, role: user.role, duration },
+      "AUTH"
+    )
 
     return NextResponse.json({
       token,
@@ -48,7 +78,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     const duration = Date.now() - startTime
-    logger.error("Login error", { duration }, "AUTH", error instanceof Error ? error.message : String(error))
+    logger.error(
+      "Login error",
+      { duration },
+      "AUTH",
+      error instanceof Error ? error.message : String(error)
+    )
     return NextResponse.json({ message: "Authentication failed" }, { status: 500 })
   }
 }
