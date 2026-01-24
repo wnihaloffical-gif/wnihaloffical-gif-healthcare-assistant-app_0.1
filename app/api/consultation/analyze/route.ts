@@ -4,7 +4,7 @@ import { checkDDI } from "@/lib/ai/ddi-checker"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 import crypto from "crypto"
-import { generateConsultationHash } from "@/lib/utils/hash-generator" // Declare the variable here
+import { generateConsultationHash } from "../../../../lib/utils/hash-generator"
 
 // ============================================================================
 // DETERMINISTIC HASH GENERATION FOR DATA INTEGRITY
@@ -38,7 +38,8 @@ export async function POST(request: NextRequest) {
         symptoms: triageResult.symptoms,
         riskLevel: triageResult.riskLevel.toUpperCase(),
         hasRedFlags: triageResult.hasRedFlags,
-        redFlagWarnings: triageResult.redFlagWarnings,
+        redFlagWarnings: triageResult.redFlagWarnings ?? [],
+        finalMedicines: [],
         patientSummaryText: triageResult.patientSummaryText,
         language,
         status: "PENDING",
@@ -46,9 +47,9 @@ export async function POST(request: NextRequest) {
         probableConditions: {
           createMany: {
             data: triageResult.probableConditions.map((pc) => ({
-              name: pc.name,
-              confidence: pc.confidence,
-              severity: pc.severity,
+              name: pc,
+              confidence: 0.8,
+              severity: "moderate",
             })),
           },
         },
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
               name: med.name,
               dose: med.dose,
               frequency: med.frequency,
-              explanation: med.explanation,
+              explanation: med.description ?? "",
             })),
           },
         },
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
             data: ddiAlerts.map((alert) => ({
               drug1: alert.drug1,
               drug2: alert.drug2,
-              severity: alert.severity.toUpperCase(),
+              severity: alert.severity === "high" ? "SEVERE" : alert.severity === "medium" ? "MODERATE" : "MILD",
               description: alert.description,
             })),
           },
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
               conditions: triageResult.probableConditions,
               medicines: safeMedicines,
               riskLevel: triageResult.riskLevel,
-              redFlags: triageResult.redFlagWarnings,
+              redFlags: triageResult.redFlagWarnings ?? [],
             }),
             txId: `0x${Math.random().toString(16).slice(2)}`,
             blockNumber: Math.floor(Math.random() * 1000000),
