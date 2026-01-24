@@ -8,10 +8,10 @@ import * as jwt from "jsonwebtoken"
 // JWT helper
 // --------------------
 function generateToken(userId: number): string {
-  const secret = process.env.JWT_SECRET || "dev-secret-key"
+  const secret = (process.env.JWT_SECRET || "dev-secret-key") as string
   const expiresIn = process.env.JWT_EXPIRY || "24h"
 
-  return jwt.sign({ userId }, secret as string, { expiresIn })
+  return jwt.sign({ userId }, secret, { expiresIn } as jwt.SignOptions)
 }
 
 // --------------------
