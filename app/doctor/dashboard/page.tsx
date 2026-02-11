@@ -2,17 +2,36 @@
 
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import useSWR from "swr"
 import type { Consultation } from "@/lib/types"
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json())
+
+interface DoctorMetrics {
+  totalConsultations: number
+  pendingConsultations: number
+  completedConsultations: number
+  highRiskConsultations: number
+  consultationsByStatus: Array<{ status: string; count: number }>
+  consultationsByRisk: Array<{ riskLevel: string; count: number }>
+  topConditions: Array<{ condition: string; count: number }>
+}
 
 export default function DoctorDashboard() {
   const router = useRouter()
   const [consultations, setConsultations] = useState<Consultation[]>([])
   const [filteredConsultations, setFilteredConsultations] = useState<Consultation[]>([])
-  const [loading, setLoading] = useState(true)
   const [language, setLanguage] = useState("en")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [filterRisk, setFilterRisk] = useState<"all" | "low" | "medium" | "high">("all")
   const [filterStatus, setFilterStatus] = useState<"all" | "draft" | "completed" | "reviewed">("all")
+  
+  // Fetch metrics from API
+  const { data: metrics, error: metricsError, isLoading: metricsLoading } = useSWR<DoctorMetrics>(
+    isAuthenticated ? "/api/doctor/metrics" : null,
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 30000 }
+  )
 
   useEffect(() => {
     const checkAuth = () => {
@@ -28,40 +47,6 @@ export default function DoctorDashboard() {
 
       setLanguage(lang)
       setIsAuthenticated(true)
-
-      // Mock load consultations
-      const mockConsultations: Consultation[] = [
-        {
-          id: "cons-1",
-          patientId: "user-1",
-          transcription: "Fever, cough, and body aches for 3 days",
-          symptoms: ["sym-1", "sym-2", "sym-6"],
-          probableConditions: ["cond-1", "cond-2"],
-          riskLevel: "low",
-          suggestedMedicines: [],
-          ddiAlerts: [],
-          status: "completed",
-          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: "cons-2",
-          patientId: "user-1",
-          transcription: "Chest pain and shortness of breath",
-          symptoms: ["sym-8", "sym-7"],
-          probableConditions: ["cond-6"],
-          riskLevel: "high",
-          suggestedMedicines: [],
-          ddiAlerts: [],
-          status: "draft",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ]
-
-      setConsultations(mockConsultations)
-      applyFilters(mockConsultations, "all", "all")
-      setLoading(false)
     }
 
     // Use a small delay to ensure client-side rendering
@@ -166,17 +151,6 @@ export default function DoctorDashboard() {
     )
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
   const riskColors = {
     low: "bg-success/10 text-success",
     medium: "bg-warning/10 text-warning",
@@ -200,24 +174,31 @@ export default function DoctorDashboard() {
 
       {/* Metrics */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="card-shadow">
-            <p className="text-sm text-muted-foreground mb-1">{t.total}</p>
-            <p className="text-3xl font-bold text-primary">{consultations.length}</p>
+        {metricsLoading ? (
+          <div className="text-center py-12">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading metrics...</p>
           </div>
-          <div className="card-shadow">
-            <p className="text-sm text-muted-foreground mb-1">{t.pending}</p>
-            <p className="text-3xl font-bold text-warning">
-              {consultations.filter((c) => c.status === "draft").length}
-            </p>
+        ) : metricsError || !metrics ? (
+          <div className="text-center py-12">
+            <p className="text-destructive">Failed to load metrics</p>
           </div>
-          <div className="card-shadow">
-            <p className="text-sm text-muted-foreground mb-1">High Risk Cases</p>
-            <p className="text-3xl font-bold text-destructive">
-              {consultations.filter((c) => c.riskLevel === "high").length}
-            </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="card-shadow">
+              <p className="text-sm text-muted-foreground mb-1">{t.total}</p>
+              <p className="text-3xl font-bold text-primary">{metrics.totalConsultations}</p>
+            </div>
+            <div className="card-shadow">
+              <p className="text-sm text-muted-foreground mb-1">{t.pending}</p>
+              <p className="text-3xl font-bold text-warning">{metrics.pendingConsultations}</p>
+            </div>
+            <div className="card-shadow">
+              <p className="text-sm text-muted-foreground mb-1">High Risk Cases</p>
+              <p className="text-3xl font-bold text-destructive">{metrics.highRiskConsultations}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Filters */}
         <div className="card-shadow mb-6">
@@ -252,43 +233,20 @@ export default function DoctorDashboard() {
           </div>
         </div>
 
-        {/* Consultations List */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-6">{t.consultations}</h2>
-          <div className="space-y-4">
-            {filteredConsultations.map((consultation) => (
-              <div key={consultation.id} className="card-shadow hover:shadow-md transition-shadow">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(consultation.createdAt).toLocaleDateString()}
-                    </p>
-                    <p className="font-semibold text-foreground">{consultation.symptoms.length} symptoms reported</p>
-                  </div>
-                  <div className={`${riskColors[consultation.riskLevel]} px-3 py-1 rounded-full text-xs font-medium`}>
-                    {consultation.riskLevel.toUpperCase()}
-                  </div>
+        {/* Top Conditions */}
+        {metrics && metrics.topConditions.length > 0 && (
+          <div className="card-shadow mb-6">
+            <h3 className="font-semibold mb-4">Top Diagnosed Conditions</h3>
+            <div className="space-y-2">
+              {metrics.topConditions.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center pb-2 border-b last:border-0">
+                  <span className="text-sm text-muted-foreground">{item.condition}</span>
+                  <span className="font-semibold">{item.count}</span>
                 </div>
-
-                <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{consultation.transcription}</p>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-2">
-                    {consultation.ddiAlerts && consultation.ddiAlerts.length > 0 && (
-                      <span className="bg-warning/10 text-warning text-xs px-2 py-1 rounded">⚠️ DDI Alert</span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => router.push(`/doctor/consultation/${consultation.id}`)}
-                    className="text-primary font-medium text-sm hover:opacity-80"
-                  >
-                    {t.viewDetails} →
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
