@@ -2,18 +2,15 @@ import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: patientId } = params
+    const { id: patientId } = await params
 
     logger.info("Fetching patient consultations", { patientId }, "CONSULTATION")
 
     const consultations = await prisma.consultation.findMany({
-      where: { patientId },
+      where: { patientId: parseInt(patientId, 10) },
       include: {
-        probableConditions: true,
-        suggestedMedicines: true,
-        ddiAlerts: true,
         blockchainRecord: true,
       },
       orderBy: { createdAt: "desc" },
@@ -23,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     logger.error(
       "Failed to fetch patient consultations",
-      { patientId: params.id },
+      { patientId: "unknown" },
       "CONSULTATION",
       error instanceof Error ? error.message : String(error),
     )

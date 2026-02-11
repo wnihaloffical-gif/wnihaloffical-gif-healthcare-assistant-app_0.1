@@ -1,15 +1,43 @@
-"use client"
+"use client";
 
-import { seedData } from "@/lib/db-seed"
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 
 interface AnalysisResultsProps {
-  data: any
-  language: string
+  data: {
+    structuredSymptoms: {
+      complaint: string;
+      onset: string;
+      duration: string;
+      severity: string;
+      associatedSymptoms: string[];
+      currentMedications: string[];
+    };
+    probableConditions: string[];
+    riskLevel: "low" | "medium" | "high";
+    redFlags: string[];
+    suggestedMedicines: {
+      name: string;
+      class: string;
+      explanation: string;
+    }[];
+    ddiAlerts: {
+      drugA: string;
+      drugB: string;
+      severity: string;
+      message: string;
+    }[];
+    patientSummaryText: string;
+    consultationId?: number;
+    blockchainHash?: string;
+  };
+  language: string;
 }
 
-export default function AnalysisResults({ data, language }: AnalysisResultsProps) {
-  const router = useRouter()
+export default function AnalysisResults({
+  data,
+  language,
+}: AnalysisResultsProps) {
+  const router = useRouter();
 
   const langText = {
     en: {
@@ -57,62 +85,97 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
       noInteractions: "कोणतेही हानिकारक परस्परक्रिया नाही",
       verifiedOn: "ब्लॉकचेन वर सत्यापित",
     },
-  }
+  };
 
-  const t = langText[language as keyof typeof langText]
+  const t = langText[language as keyof typeof langText];
 
-  const getSymptomName = (symId: string) => {
-    const sym = seedData.symptoms.find((s) => s.id === symId)
-    if (language === "hi") return sym?.nameHi || sym?.name
-    if (language === "mr") return sym?.nameMr || sym?.name
-    return sym?.name
-  }
-
-  const getConditionName = (condId: string) => {
-    const cond = seedData.conditions.find((c) => c.id === condId)
-    if (language === "hi") return cond?.nameHi || cond?.name
-    if (language === "mr") return cond?.nameMr || cond?.name
-    return cond?.name
-  }
-
-  const riskColors = {
+  const riskColors: Record<string, string> = {
     low: "bg-success/10 text-success border-success",
     medium: "bg-warning/10 text-warning border-warning",
     high: "bg-destructive/10 text-destructive border-destructive",
-  }
+  };
+  const riskClass = riskColors[data.riskLevel] ?? riskColors.medium;
 
   return (
     <div className="space-y-6">
       {/* Risk Level Banner */}
-      {data.hasRedFlags ? (
+      {data.redFlags.length > 0 ? (
         <div className="card-shadow border-l-4 border-destructive bg-destructive/5 p-6">
-          <h3 className="text-lg font-bold text-destructive mb-2">⚠️ RED FLAG ALERT</h3>
-          <p className="text-destructive font-medium">
-            Severe symptoms detected. Please seek immediate medical attention at your nearest healthcare facility.
-          </p>
+          <h3 className="text-lg font-bold text-destructive mb-2">
+            ⚠️ RED FLAG ALERT
+          </h3>
+          <ul className="text-destructive font-medium">
+            {data.redFlags.map((flag, idx) => (
+              <li key={idx}>• {flag}</li>
+            ))}
+          </ul>
         </div>
       ) : (
-        <div className={`card-shadow border-l-4 p-6 ${riskColors[data.riskLevel]}`}>
-          <h3 className="text-lg font-bold mb-2">Risk Level: {data.riskLevel.toUpperCase()}</h3>
-          <p className="text-sm">Based on reported symptoms, this case has been classified as {data.riskLevel} risk.</p>
+        <div className={`card-shadow border-l-4 p-6 ${riskClass}`}>
+          <h3 className="text-lg font-bold mb-2">
+            Risk Level: {data.riskLevel.toUpperCase()}
+          </h3>
+          <p className="text-sm">
+            Based on reported symptoms, this case has been classified as{" "}
+            {data.riskLevel} risk.
+          </p>
         </div>
       )}
 
       {/* Patient Summary */}
       <div className="card-shadow">
         <h2 className="text-xl font-bold mb-3">{t.patientSummary}</h2>
-        <p className="text-foreground leading-relaxed">{data.patientSummaryText}</p>
+        <p className="text-foreground leading-relaxed">
+          {data.patientSummaryText}
+        </p>
       </div>
 
       {/* Symptoms */}
       <div className="card-shadow">
         <h3 className="text-lg font-semibold mb-3">{t.symptoms}</h3>
-        <div className="flex flex-wrap gap-2">
-          {data.symptoms.map((symId: string) => (
-            <span key={symId} className="bg-info/10 text-info px-3 py-1 rounded-full text-sm font-medium">
-              {getSymptomName(symId)}
-            </span>
-          ))}
+        <div className="space-y-2">
+          <p>
+            <strong>Complaint:</strong> {data.structuredSymptoms.complaint}
+          </p>
+          <p>
+            <strong>Onset:</strong> {data.structuredSymptoms.onset}
+          </p>
+          <p>
+            <strong>Duration:</strong> {data.structuredSymptoms.duration}
+          </p>
+          <p>
+            <strong>Severity:</strong> {data.structuredSymptoms.severity}
+          </p>
+          {data.structuredSymptoms.associatedSymptoms.length > 0 && (
+            <div>
+              <strong>Associated Symptoms:</strong>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {data.structuredSymptoms.associatedSymptoms.map((sym, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-info/10 text-info px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {sym}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+          {data.structuredSymptoms.currentMedications.length > 0 && (
+            <div>
+              <strong>Current Medications:</strong>
+              <div className="flex flex-wrap gap-2 mt-1">
+                {data.structuredSymptoms.currentMedications.map((med, idx) => (
+                  <span
+                    key={idx}
+                    className="bg-secondary/10 text-secondary px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {med}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -120,12 +183,12 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
       <div className="card-shadow">
         <h3 className="text-lg font-semibold mb-3">{t.conditions}</h3>
         <div className="space-y-2">
-          {data.probableConditions.map((condId: string) => (
-            <div key={condId} className="p-3 bg-accent/10 rounded border border-accent">
-              <p className="font-medium text-foreground">{getConditionName(condId)}</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Please consult a doctor for confirmation and treatment.
-              </p>
+          {data.probableConditions.map((condition, idx) => (
+            <div
+              key={idx}
+              className="p-3 bg-accent/10 rounded border border-accent"
+            >
+              <p className="font-medium text-foreground">{condition}</p>
             </div>
           ))}
         </div>
@@ -135,21 +198,21 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
       <div className="card-shadow">
         <h3 className="text-lg font-semibold mb-4">{t.medicines}</h3>
         <div className="space-y-3">
-          {data.suggestedMedicines.map((med: any) => (
-            <div key={med.id} className="p-4 border border-border rounded-lg">
+          {data.suggestedMedicines.map((med, idx) => (
+            <div key={idx} className="p-4 border border-border rounded-lg">
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <p className="font-semibold text-foreground">{med.name}</p>
                   <p className="text-sm text-muted-foreground">{med.class}</p>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-2">{med.description}</p>
-              <p className="text-sm font-medium text-foreground mb-3">
-                <strong>Dose & Frequency:</strong> {med.dose} • {med.frequency}
+              <p className="text-sm text-muted-foreground mb-2">
+                {med.explanation}
               </p>
               <div className="bg-warning/10 border border-warning/20 p-2 rounded text-xs text-warning">
-                ⚠️ <strong>DISCLAIMER:</strong> This is NOT a prescription. These are educational suggestions only.
-                Always consult a licensed doctor before taking any medicine.
+                ⚠️ <strong>DISCLAIMER:</strong> This is NOT a prescription.
+                These are educational suggestions only. Always consult a
+                licensed doctor before taking any medicine.
               </div>
             </div>
           ))}
@@ -159,11 +222,16 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
       {/* DDI Status */}
       {data.ddiAlerts && data.ddiAlerts.length > 0 ? (
         <div className="card-shadow border-l-4 border-warning bg-warning/5">
-          <h3 className="text-lg font-semibold mb-3 text-warning">{t.ddiStatus}</h3>
+          <h3 className="text-lg font-semibold mb-3 text-warning">
+            {t.ddiStatus}
+          </h3>
           <div className="space-y-2">
-            {data.ddiAlerts.map((alert: any, idx: number) => (
-              <div key={idx} className="p-3 bg-warning/10 rounded text-sm font-medium text-warning">
-                {alert.description}
+            {data.ddiAlerts.map((alert, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-warning/10 rounded text-sm font-medium text-warning"
+              >
+                {alert.message}
               </div>
             ))}
           </div>
@@ -175,25 +243,23 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
       )}
 
       {/* Blockchain Verification */}
-      {data.blockchainProof && (
+      {data.blockchainHash && (
         <div className="card-shadow border-l-4 border-secondary bg-secondary/5">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">✓ {t.blockchainVerification}</h3>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            ✓ {t.blockchainVerification}
+          </h3>
           <div className="space-y-3 text-sm">
             <div>
-              <p className="text-muted-foreground mb-1">Transaction Hash</p>
+              <p className="text-muted-foreground mb-1">Blockchain Hash</p>
               <p className="font-mono text-xs bg-background p-2 rounded border border-border break-all">
-                {data.blockchainProof.hash}
+                {data.blockchainHash}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1">Transaction ID</p>
-              <p className="font-mono text-xs bg-background p-2 rounded border border-border">
-                {data.blockchainProof.txId}
+              <p className="text-muted-foreground mb-1">Status</p>
+              <p className="font-medium text-success">
+                ✓ Verified on Blockchain
               </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-1">{t.verifiedOn}</p>
-              <p className="font-medium">{new Date(data.blockchainProof.timestamp).toLocaleString()}</p>
             </div>
           </div>
         </div>
@@ -207,21 +273,27 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
             <span className="text-primary font-bold">1</span>
             <div>
               <p className="font-medium">{t.consultation}</p>
-              <p className="text-sm text-muted-foreground">Book an appointment with a qualified doctor</p>
+              <p className="text-sm text-muted-foreground">
+                Book an appointment with a qualified doctor
+              </p>
             </div>
           </li>
           <li className="flex gap-3">
             <span className="text-primary font-bold">2</span>
             <div>
               <p className="font-medium">{t.rest}</p>
-              <p className="text-sm text-muted-foreground">Get adequate sleep and watch for changes</p>
+              <p className="text-sm text-muted-foreground">
+                Get adequate sleep and watch for changes
+              </p>
             </div>
           </li>
           <li className="flex gap-3">
             <span className="text-primary font-bold">3</span>
             <div>
               <p className="font-medium">{t.fluids}</p>
-              <p className="text-sm text-muted-foreground">Drink plenty of water and warm beverages</p>
+              <p className="text-sm text-muted-foreground">
+                Drink plenty of water and warm beverages
+              </p>
             </div>
           </li>
         </ul>
@@ -235,5 +307,5 @@ export default function AnalysisResults({ data, language }: AnalysisResultsProps
         {t.saveConsultation}
       </button>
     </div>
-  )
+  );
 }

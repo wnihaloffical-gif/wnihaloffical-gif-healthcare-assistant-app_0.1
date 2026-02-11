@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-import type { Role } from "@prisma/client"
+import { Role } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
 const prisma = new PrismaClient()
@@ -51,6 +51,37 @@ async function main() {
 
     console.log(`[SEED] User ensured: ${user.email}`)
   }
+
+  console.log("[SEED] Seeding drug interactions...")
+
+  const drugInteractions = [
+    {
+      drugA: "Aspirin",
+      drugB: "Warfarin",
+      severity: "SEVERE",
+      description: "Increased risk of bleeding due to additive anticoagulant effects.",
+    },
+    {
+      drugA: "Ibuprofen",
+      drugB: "Aspirin",
+      severity: "MODERATE",
+      description: "Reduced antiplatelet effect of aspirin and increased gastrointestinal risk.",
+    },
+    {
+      drugA: "Paracetamol",
+      drugB: "Warfarin",
+      severity: "MILD",
+      description: "Potential increase in anticoagulant effect.",
+    },
+  ]
+
+  for (const interaction of drugInteractions) {
+    await prisma.drugInteraction.create({
+      data: interaction,
+    })
+  }
+
+  console.log("[SEED] Drug interactions seeded.")
 
   console.log("[SEED] Database seeding completed successfully ✅")
 }

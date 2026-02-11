@@ -75,7 +75,7 @@
     "@tailwindcss/postcss": "^4.1.9",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^22",
+    "@types/node": "^22.19.7",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "postcss": "^8.5",
@@ -83,5 +83,8 @@
     "tailwindcss": "^4.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

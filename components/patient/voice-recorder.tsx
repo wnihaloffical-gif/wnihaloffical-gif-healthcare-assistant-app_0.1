@@ -1,20 +1,24 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react";
 
 interface VoiceRecorderProps {
-  language: string
-  onTranscriptionComplete: (text: string) => void
-  onLanguageChange: (lang: string) => void
+  language: string;
+  onTranscriptionComplete: (text: string) => void;
+  onLanguageChange: (lang: string) => void;
 }
 
-export default function VoiceRecorder({ language, onTranscriptionComplete, onLanguageChange }: VoiceRecorderProps) {
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null)
-  const [transcription, setTranscription] = useState("")
-  const [loading, setLoading] = useState(false)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+export default function VoiceRecorder({
+  language,
+  onTranscriptionComplete,
+  onLanguageChange,
+}: VoiceRecorderProps) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [transcription, setTranscription] = useState("");
+  const [loading, setLoading] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const langText = {
     en: {
@@ -28,7 +32,8 @@ export default function VoiceRecorder({ language, onTranscriptionComplete, onLan
       confirm: "Confirm Transcription",
       edit: "Edit Text",
       nextStep: "Proceed to Review",
-      instructions: "Click 'Start Recording' and speak your symptoms clearly in your selected language.",
+      instructions:
+        "Click 'Start Recording' and speak your symptoms clearly in your selected language.",
     },
     hi: {
       selectLanguage: "भाषा चुनें",
@@ -56,86 +61,101 @@ export default function VoiceRecorder({ language, onTranscriptionComplete, onLan
       nextStep: "समीक्षेसाठी पुढे जा",
       instructions: "आपल्या भाषेत आपल्या लक्षणांबद्दल स्पष्टपणे बोला।",
     },
-  }
+  };
 
-  const t = langText[language as keyof typeof langText]
+  const t = langText[language as keyof typeof langText];
 
   useEffect(() => {
     const initMediaRecorder = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const mediaRecorder = new MediaRecorder(stream)
-        mediaRecorderRef.current = mediaRecorder
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
 
         mediaRecorder.ondataavailable = (event) => {
-          chunksRef.current.push(event.data)
-        }
+          chunksRef.current.push(event.data);
+        };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(chunksRef.current, { type: "audio/wav" })
-          setRecordedAudio(blob)
-          chunksRef.current = []
-        }
+          const blob = new Blob(chunksRef.current, { type: "audio/wav" });
+          setRecordedAudio(blob);
+          chunksRef.current = [];
+        };
       } catch (error) {
-        console.error("Microphone access denied:", error)
+        console.error("Microphone access denied:", error);
       }
-    }
+    };
 
-    initMediaRecorder()
-  }, [])
+    initMediaRecorder();
+  }, []);
 
   const startRecording = () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.start()
-      setIsRecording(true)
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
     }
-  }
+  };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
-  }
+  };
 
   const handleTranscribe = async () => {
-    if (!recordedAudio) return
+    if (!recordedAudio) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
-      // Mock transcription API call
-      // In production, integrate with speech-to-text service (Google Cloud Speech, Azure, etc.)
+      const formData = new FormData();
+      formData.append("audio", recordedAudio);
+      formData.append("language", language);
+
+      const response = await fetch("/api/stt/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Transcription failed");
+      }
+
+      const data = await response.json();
+      setTranscription(data.transcription);
+    } catch (error) {
+      console.error("Transcription error:", error);
+      // Fallback to mock
       const mockTranscriptions: Record<string, string> = {
         en: "I have had a fever and cough for the past three days. I also have body aches and fatigue.",
         hi: "मुझे पिछले तीन दिनों से बुखार और खांसी है। मुझे शरीर में दर्द और थकान भी है।",
         mr: "मला मागील तीन दिनांपासून ताप आणि खोकला आहे। मुला शरीरात दुखणे आणि थकव आहे।",
-      }
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const text = mockTranscriptions[language] || mockTranscriptions["en"]
-      setTranscription(text)
-    } catch (error) {
-      console.error("Transcription error:", error)
+      };
+      setTranscription(
+        mockTranscriptions[language] || mockTranscriptions["en"],
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handlePlayback = () => {
     if (recordedAudio) {
-      const url = URL.createObjectURL(recordedAudio)
-      const audio = new Audio(url)
-      audio.play()
+      const url = URL.createObjectURL(recordedAudio);
+      const audio = new Audio(url);
+      audio.play();
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
       {/* Language Selection */}
       <div>
-        <label className="block text-sm font-medium mb-2">{t.selectLanguage}</label>
+        <label className="block text-sm font-medium mb-2">
+          {t.selectLanguage}
+        </label>
         <div className="flex gap-2">
           {(["en", "hi", "mr"] as const).map((lang) => (
             <button
@@ -163,7 +183,9 @@ export default function VoiceRecorder({ language, onTranscriptionComplete, onLan
             <button
               onClick={isRecording ? stopRecording : startRecording}
               className={`w-full py-4 px-6 rounded-lg font-semibold text-white text-lg transition-colors ${
-                isRecording ? "bg-destructive hover:opacity-90" : "bg-primary hover:opacity-90"
+                isRecording
+                  ? "bg-destructive hover:opacity-90"
+                  : "bg-primary hover:opacity-90"
               }`}
             >
               {isRecording ? (
@@ -187,8 +209,8 @@ export default function VoiceRecorder({ language, onTranscriptionComplete, onLan
               </button>
               <button
                 onClick={() => {
-                  setRecordedAudio(null)
-                  setTranscription("")
+                  setRecordedAudio(null);
+                  setTranscription("");
                 }}
                 className="flex-1 bg-muted text-muted-foreground py-2 px-4 rounded font-semibold hover:opacity-80 transition-colors"
               >
@@ -228,5 +250,5 @@ export default function VoiceRecorder({ language, onTranscriptionComplete, onLan
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import VoiceRecorder from "@/components/patient/voice-recorder"
-import ConsultationForm from "@/components/patient/consultation-form"
-import { useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import VoiceRecorder from "@/components/patient/voice-recorder";
+import ConsultationForm from "@/components/patient/consultation-form";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export default function NewConsultationPage() {
-  const router = useRouter()
-  const [step, setStep] = useState<"voice" | "confirm" | "analysis">("voice")
-  const [transcription, setTranscription] = useState("")
-  const [language, setLanguage] = useState("en")
-  const [loading, setLoading] = useState(false)
-  const [analysisError, setAnalysisError] = useState("")
+  const router = useRouter();
+  const [step, setStep] = useState<"voice" | "confirm" | "analysis">("voice");
+  const [transcription, setTranscription] = useState("");
+  const [language, setLanguage] = useState("en");
+  const [loading, setLoading] = useState(false);
+  const [analysisError, setAnalysisError] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const lang = localStorage.getItem("language") || "en"
-    setLanguage(lang)
+    const token = localStorage.getItem("token");
+    const lang = localStorage.getItem("language") || "en";
+    setLanguage(lang);
 
     if (!token) {
-      router.push("/")
+      router.push("/");
     }
-  }, [router])
+  }, [router]);
 
   const langText = {
     en: {
@@ -45,60 +45,91 @@ export default function NewConsultationPage() {
       step3: "विश्लेषण परिणाम",
       selectLanguage: "परामर्श भाषा",
     },
-  }
+  };
 
-  const t = langText[language as keyof typeof langText]
+  const t = langText[language as keyof typeof langText];
 
   const steps = [
     { id: "voice", label: t.step1 },
     { id: "confirm", label: t.step2 },
     { id: "analysis", label: t.step3 },
-  ]
+  ];
 
   const handleAnalyze = async (editedText: string, medicines: string[]) => {
-    setLoading(true)
-    setAnalysisError("")
-    setStep("analysis")
+    setLoading(true);
+    setAnalysisError("");
+    setStep("analysis");
 
     try {
-      const patientId = localStorage.getItem("userId") || "patient-default"
-      const response = await fetch("/api/consultation/analyze", {
+      const patientId = parseInt(localStorage.getItem("userId") || "1");
+
+      // First, analyze
+      const analyzeResponse = await fetch("/api/consultation/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          inputText: editedText,
+          transcription: editedText,
           language,
           currentMedicines: medicines,
-          patientId,
         }),
-      })
+      });
 
-      if (!response.ok) {
-        throw new Error("Analysis failed")
+      if (!analyzeResponse.ok) {
+        throw new Error("Analysis failed");
       }
 
-      const analysisData = await response.json()
+      const analysis = await analyzeResponse.json();
 
-      sessionStorage.setItem("analysisData", JSON.stringify(analysisData))
-      router.push("/patient/consultation/analysis-results")
+      // Then, save to DB
+      const saveResponse = await fetch("/api/consultation/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patientId,
+          analysis,
+          transcription: editedText,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error("Save failed");
+      }
+
+      const saveData = await saveResponse.json();
+
+      // Store for results page
+      sessionStorage.setItem(
+        "analysisData",
+        JSON.stringify({
+          ...analysis,
+          consultationId: saveData.consultationId,
+          blockchainHash: saveData.blockchainHash,
+        }),
+      );
+      router.push("/patient/consultation/analysis-results");
     } catch (error) {
-      console.error("Analysis error:", error)
-      setAnalysisError("Failed to analyze symptoms. Please try again.")
-      setStep("confirm")
+      console.error("Analysis error:", error);
+      setAnalysisError("Failed to analyze symptoms. Please try again.");
+      setStep("confirm");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-header">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <button onClick={() => router.back()} className="text-primary hover:opacity-80 mb-4">
+          <button
+            onClick={() => router.back()}
+            className="text-primary hover:opacity-80 mb-4"
+          >
             ← Back
           </button>
-          <h1 className="text-2xl font-bold text-primary">{t.newConsultation}</h1>
+          <h1 className="text-2xl font-bold text-primary">
+            {t.newConsultation}
+          </h1>
         </div>
       </header>
 
@@ -124,7 +155,9 @@ export default function NewConsultationPage() {
               {idx < steps.length - 1 && (
                 <div
                   className={`flex-1 h-1 ml-4 ${
-                    idx < steps.findIndex((x) => x.id === step) ? "bg-success" : "bg-muted"
+                    idx < steps.findIndex((x) => x.id === step)
+                      ? "bg-success"
+                      : "bg-muted"
                   }`}
                 />
               )}
@@ -134,8 +167,8 @@ export default function NewConsultationPage() {
 
         {/* Disclaimer */}
         <div className="disclaimer-banner mb-8">
-          <strong>⚠️ Important:</strong> This is for educational purposes only. Always consult a licensed doctor for
-          medical advice.
+          <strong>⚠️ Important:</strong> This is for educational purposes only.
+          Always consult a licensed doctor for medical advice.
         </div>
 
         {/* Content */}
@@ -144,8 +177,8 @@ export default function NewConsultationPage() {
             <VoiceRecorder
               language={language}
               onTranscriptionComplete={(text) => {
-                setTranscription(text)
-                setStep("confirm")
+                setTranscription(text);
+                setStep("confirm");
               }}
               onLanguageChange={setLanguage}
             />
@@ -167,11 +200,15 @@ export default function NewConsultationPage() {
                   <div className="mb-4">
                     <div className="inline-block animate-spin">⏳</div>
                   </div>
-                  <p className="text-muted-foreground">Analyzing your symptoms...</p>
+                  <p className="text-muted-foreground">
+                    Analyzing your symptoms...
+                  </p>
                 </>
               ) : (
                 <>
-                  <p className="text-muted-foreground">Redirecting to results...</p>
+                  <p className="text-muted-foreground">
+                    Redirecting to results...
+                  </p>
                 </>
               )}
             </div>
@@ -179,5 +216,5 @@ export default function NewConsultationPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

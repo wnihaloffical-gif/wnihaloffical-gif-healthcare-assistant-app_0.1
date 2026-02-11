@@ -2,20 +2,18 @@ import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: consultationId } = params
+    const { id: consultationId } = await params
 
     logger.info("Fetching consultation", { consultationId }, "CONSULTATION")
 
     const consultation = await prisma.consultation.findUnique({
-      where: { id: consultationId },
+      where: { id: parseInt(consultationId, 10) },
       include: {
-        probableConditions: true,
-        suggestedMedicines: true,
-        ddiAlerts: true,
         blockchainRecord: true,
         mlInferenceLog: true,
+        auditLogs: true,
       },
     })
 
@@ -39,15 +37,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: consultationId } = params
+    const { id: consultationId } = await params
     const updates = await request.json()
 
     logger.info("Updating consultation", { consultationId, updates }, "CONSULTATION")
 
     const updatedConsultation = await prisma.consultation.update({
-      where: { id: consultationId },
+      where: { id: parseInt(consultationId, 10) },
       data: {
         finalDiagnosis: updates.finalDiagnosis,
         finalMedicines: updates.finalMedicines,

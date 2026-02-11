@@ -1,14 +1,16 @@
-import { db } from "@/lib/db/crud"
+import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: userId } = params
+    const { id: userId } = await params
 
     logger.info("Fetching user profile", { userId }, "USER")
 
-    const user = await db.getUserById(userId)
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(userId, 10) },
+    })
 
     if (!user) {
       logger.warn("User not found", { userId }, "USER")
@@ -22,7 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   } catch (error) {
     logger.error(
       "Failed to fetch user",
-      { userId: params.id },
+      { userId: "unknown" },
       "USER",
       error instanceof Error ? error.message : String(error),
     )

@@ -8,6 +8,7 @@ const nextConfig = {
   },
   // reactCompiler: true,
   cacheComponents: false,
+  devIndicators: false,
 }
 
 export default nextConfig

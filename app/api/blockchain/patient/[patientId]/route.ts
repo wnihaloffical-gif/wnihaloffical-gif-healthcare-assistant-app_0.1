@@ -7,9 +7,9 @@ function hashPatientId(patientId: string): string {
   return crypto.createHash("sha256").update(patientId).digest("hex")
 }
 
-export async function GET(request: NextRequest, { params }: { params: { patientId: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ patientId: string }> }) {
   try {
-    const { patientId } = params
+    const { patientId } = await params
 
     if (!patientId) {
       return NextResponse.json({ message: "Patient ID required" }, { status: 400 })

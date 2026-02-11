@@ -192,7 +192,7 @@ class MLModelTrainer:
         print("MODEL TRAINING COMPLETE")
         print("=" * 60)
 
-    def save_models(self, directory: str = "ml-service/models"):
+    def save_models(self, directory: str = "./models"):
         """Save trained models to disk"""
         import os
 

@@ -4,11 +4,11 @@ import { type NextRequest, NextResponse } from "next/server"
 import * as bcrypt from "bcryptjs"
 import * as jwt from "jsonwebtoken"
 
-function generateToken(userId: string): string {
-  const secret = process.env.JWT_SECRET || "dev-secret-key"
+function generateToken(userId: number): string {
+  const secret = (process.env.JWT_SECRET || "dev-secret-key") as string
   const expiresIn = process.env.JWT_EXPIRY || "24h"
 
-  return jwt.sign({ userId }, secret, { expiresIn })
+  return jwt.sign({ userId }, secret, { expiresIn } as jwt.SignOptions)
 }
 
 export async function POST(request: NextRequest) {

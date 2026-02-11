@@ -8,149 +8,108 @@ datasource db {
 }
 
 model User {
-  id             Int     @id @default(autoincrement())
-  email          String  @unique
-  name           String?
-  passwordHash   String
-  role           Role
-  specialization String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  consultationsAsPatient Consultation[] @relation("PatientConsultations")
-  consultationsAsDoctor  Consultation[] @relation("DoctorConsultations")
+  id                     Int            @id @default(autoincrement())
+  email                  String         @unique
+  name                   String?
+  passwordHash           String
+  role                   Role
+  specialization         String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
   auditLogs              AuditLog[]
+  consultationsAsDoctor  Consultation[] @relation("DoctorConsultations")
+  consultationsAsPatient Consultation[] @relation("PatientConsultations")
 
   @@map("users")
 }
 
 model Consultation {
-  id        Int  @id @default(autoincrement())
-  patientId Int
-  doctorId  Int?
-
-  symptoms        Json
-  redFlagWarnings Json
-  finalMedicines  Json
-
-  riskLevel   RiskLevel
-  hasRedFlags Boolean            @default(false)
-  language    String             @default("English")
-  status      ConsultationStatus @default(PENDING)
-
-  doctorNotes        String? @db.LongText
-  finalDiagnosis     String? @db.LongText
-  patientSummaryText String? @db.LongText
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  patient User  @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
-  doctor  User? @relation("DoctorConsultations", fields: [doctorId], references: [id], onDelete: SetNull)
-
-  probableConditions ProbableCondition[]
-  suggestedMedicines SuggestedMedicine[]
-  ddiAlerts          DDIAlert[]
-  blockchainRecord   BlockchainRecord?
-  mlInferenceLog     MLInferenceLog?
+  id                 Int                @id @default(autoincrement())
+  patientId          Int
+  doctorId           Int?
+  riskLevel          String
+  language           String             @default("English")
+  status             ConsultationStatus @default(PENDING)
+  doctorNotes        String?            @db.LongText
+  finalDiagnosis     String?            @db.LongText
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  blockchainHash     String?
+  ddiAlerts          Json
+  finalizedByDoctor  Boolean            @default(false)
+  medicines          Json
+  probableConditions Json
+  structuredSymptoms Json
+  summaryText        String             @db.LongText
+  transcript         String             @db.LongText
   auditLogs          AuditLog[]
+  blockchainRecord   BlockchainRecord?
+  doctor             User?              @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  patient            User               @relation("PatientConsultations", fields: [patientId], references: [id], onDelete: Cascade)
+  mlInferenceLog     MLInferenceLog?
 
   @@index([patientId, createdAt])
   @@index([doctorId, status])
   @@map("consultations")
 }
 
-model ProbableCondition {
-  id             Int    @id @default(autoincrement())
-  consultationId Int
-  name           String
-  confidence     Float
-  severity       String
+model DrugInteraction {
+  id          Int         @id @default(autoincrement())
+  drugA       String
+  drugB       String
+  severity    DDISeverity
+  description String      @db.LongText
 
-  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-
-  @@index([consultationId])
-  @@map("probable_conditions")
-}
-
-model SuggestedMedicine {
-  id             Int    @id @default(autoincrement())
-  consultationId Int
-  medicineId     String
-  name           String
-  dose           String
-  frequency      String
-  explanation    String @db.LongText
-
-  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-
-  @@index([consultationId])
-  @@map("suggested_medicines")
-}
-
-model DDIAlert {
-  id             Int         @id @default(autoincrement())
-  consultationId Int
-  drug1          String
-  drug2          String
-  severity       DDISeverity
-  description    String      @db.LongText
-
-  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
-
-  @@index([consultationId])
-  @@map("ddi_alerts")
+  @@unique([drugA, drugB])
+  @@map("drug_interactions")
 }
 
 model BlockchainRecord {
-  id             Int      @id @default(autoincrement())
-  consultationId Int      @unique
+  id             Int          @id @default(autoincrement())
+  consultationId Int          @unique
   patientId      Int
-  dataHash       String   @unique
-  txId           String   @unique
+  dataHash       String       @unique
+  txId           String       @unique
   blockNumber    Int
-  timestamp      DateTime @default(now())
-  verified       Boolean  @default(true)
-
-  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  timestamp      DateTime     @default(now())
+  verified       Boolean      @default(true)
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
   @@map("blockchain_records")
 }
 
 model MLInferenceLog {
-  id             Int      @id @default(autoincrement())
-  consultationId Int      @unique
+  id             Int          @id @default(autoincrement())
+  consultationId Int          @unique
   patientId      Int
-  inputText      String   @db.LongText
+  inputText      String       @db.LongText
   language       String
   modelVersion   String
   predictions    Json
   processingTime Int
-  timestamp      DateTime @default(now())
-
-  consultation Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
+  timestamp      DateTime     @default(now())
+  consultation   Consultation @relation(fields: [consultationId], references: [id], onDelete: Cascade)
 
   @@index([patientId])
   @@map("ml_inference_logs")
 }
 
 model AuditLog {
-  id         Int      @id @default(autoincrement())
-  module     String
-  action     String
-  userId     Int?
-  resourceId Int?
-  timestamp  DateTime @default(now())
-  details    Json
-
-  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  Consultation   Consultation? @relation(fields: [consultationId], references: [id])
+  id             Int           @id @default(autoincrement())
+  module         String
+  action         String
+  userId         Int?
+  resourceId     Int?
+  timestamp      DateTime      @default(now())
+  details        Json
   consultationId Int?
+  consultation   Consultation? @relation(fields: [consultationId], references: [id])
+  user           User?         @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([module])
+  @@index([consultationId], map: "audit_logs_consultationId_fkey")
   @@map("audit_logs")
 }
 
@@ -158,13 +117,6 @@ enum Role {
   PATIENT
   DOCTOR
   ADMIN
-}
-
-enum RiskLevel {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
 }
 
 enum ConsultationStatus {

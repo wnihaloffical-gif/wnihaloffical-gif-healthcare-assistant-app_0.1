@@ -1,60 +1,22 @@
-/**
- * Mock blockchain client for storing consultation hashes
- * In production, integrate with actual Ethereum node or blockchain service
- */
+// lib/blockchain/client.ts
+// INTEGRATE REAL BLOCKCHAIN SERVICE HERE (Ethereum, Polygon, etc.)
 
-interface BlockchainRecord {
-  hash: string
-  timestamp: number
-  consultationId: string
-  patientId: string
-  role: string
-  txId: string
+import crypto from "crypto"
+
+export function hashConsultation(summaryJSON: string): string {
+  // INTEGRATE REAL BLOCKCHAIN HASHING HERE
+  return crypto.createHash("sha256").update(summaryJSON).digest("hex")
 }
 
-// In-memory mock blockchain ledger
-const mockBlockchain: BlockchainRecord[] = []
+export async function storeConsultation(hash: string, patientId: number, role: string): Promise<{ txId: string; timestamp: Date }> {
+  // INTEGRATE REAL BLOCKCHAIN STORAGE HERE
+  console.log(`[BLOCKCHAIN] Storing hash ${hash} for patient ${patientId} as ${role}`)
 
-export function storeConsultationHash(
-  consultationId: string,
-  patientId: string,
-  role: string,
-  dataHash: string,
-): BlockchainRecord {
-  const record: BlockchainRecord = {
-    hash: dataHash,
-    timestamp: Date.now(),
-    consultationId,
-    patientId,
-    role,
-    txId: `0x${Math.random().toString(16).slice(2)}`, // Mock transaction ID
-  }
+  // Mock implementation
+  await new Promise(resolve => setTimeout(resolve, 500))
 
-  mockBlockchain.push(record)
-  console.log("[v0] Blockchain record stored:", record)
+  const txId = `0x${Math.random().toString(16).slice(2)}`
+  const timestamp = new Date()
 
-  return record
-}
-
-export function getConsultationHistory(patientId: string): BlockchainRecord[] {
-  return mockBlockchain.filter((record) => record.patientId === patientId)
-}
-
-export function getBlockchainProof(consultationId: string): BlockchainRecord | null {
-  return mockBlockchain.find((record) => record.consultationId === consultationId) || null
-}
-
-/**
- * Generates a simple SHA-256-like hash for the consultation data
- * In production, use crypto-js or Node.js crypto module
- */
-export function hashConsultationData(data: object): string {
-  const str = JSON.stringify(data)
-  let hash = 0
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash // Convert to 32bit integer
-  }
-  return `0x${Math.abs(hash).toString(16)}`
+  return { txId, timestamp }
 }
