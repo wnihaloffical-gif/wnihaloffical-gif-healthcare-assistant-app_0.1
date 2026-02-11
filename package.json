@@ -4,7 +4,7 @@
   "private": true,
   "description": "Multi-language AI + Blockchain Healthcare Assistant",
   "scripts": {
-    "build": "next build",
+    "build": "prisma generate && next build",
     "db:check": "ts-node scripts/check-db.ts",
     "db:push": "prisma db push",
     "db:seed": "ts-node scripts/seed.ts",
