@@ -5,7 +5,6 @@
   "description": "Multi-language AI + Blockchain Healthcare Assistant",
   "scripts": {
     "build": "next build",
-    "postinstall": "prisma generate",
     "db:check": "ts-node scripts/check-db.ts",
     "db:push": "prisma db push",
     "db:seed": "ts-node scripts/seed.ts",
