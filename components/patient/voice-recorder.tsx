@@ -377,6 +377,7 @@ export default function VoiceRecorder({
           
           <button
             onClick={validateAndProceed}
+            disabled={!transcription || transcription.trim().length === 0}
             className="w-full bg-primary text-primary-foreground py-2 px-4 rounded font-semibold hover:opacity-90 transition-colors disabled:opacity-50"
           >
             {t.nextStep}
