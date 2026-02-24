@@ -22,8 +22,10 @@ export default function VoiceRecorder({
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [transcription, setTranscription] = useState("");
+  const [interimTranscript, setInterimTranscript] = useState("");
   const [loading, setLoading] = useState(false);
   const [browserSpeechAvailable, setBrowserSpeechAvailable] = useState(true);
+  const [validationError, setValidationError] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recognitionRef = useRef<any>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -73,6 +75,48 @@ export default function VoiceRecorder({
 
   const t = langText[language as keyof typeof langText];
 
+  // Validate transcription has meaningful content
+  const isValidTranscription = (text: string): boolean => {
+    if (!text || text.trim().length < 5) return false;
+    
+    // Filter out common greetings and meaningless phrases
+    const meaninglessPatterns = [
+      /^hello+\s*hello+\s*$/i,
+      /^hi+\s*hi+\s*$/i,
+      /^yeah+\s*$/i,
+      /^okay+\s*$/i,
+      /^test+\s*$/i,
+      /^one\s+two\s+three\s*$/i,
+      /^\d+\s*$/,
+    ];
+    
+    // Check if text matches meaningless patterns
+    const normalized = text.toLowerCase().trim();
+    if (meaninglessPatterns.some(pattern => pattern.test(normalized))) {
+      return false;
+    }
+    
+    // Must have at least 2 words that look like symptoms
+    const words = text.split(/\s+/);
+    return words.length >= 2;
+  };
+
+  const validateAndProceed = () => {
+    const fullText = transcription + interimTranscript;
+    if (!isValidTranscription(fullText)) {
+      setValidationError(
+        language === "en"
+          ? "Please record meaningful symptoms. Simple greetings like 'hello hello' are not valid."
+          : language === "hi"
+            ? "कृपया सार्थक लक्षण रिकॉर्ड करें। 'नमस्ते नमस्ते' जैसे सरल अभिवादन वैध नहीं हैं।"
+            : "कृपया सार्थक लक्षण रेकॉर्ड करा। 'नमस्ते नमस्ते' सारखे साधे अभिवादन वैध नाहीत।"
+      );
+      return;
+    }
+    setValidationError("");
+    onTranscriptionComplete(fullText);
+  };
+
   useEffect(() => {
     // Check for Web Speech API availability
     const SpeechRecognition =
@@ -94,15 +138,18 @@ export default function VoiceRecorder({
       };
 
       recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = "";
+        let interim = "";
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             setTranscription((prev) => prev + (prev ? " " : "") + transcript);
+            console.log("[v0] Final transcript:", transcript);
           } else {
-            interimTranscript += transcript;
+            interim += transcript;
           }
         }
+        // Show interim results in real-time
+        setInterimTranscript(interim);
       };
 
       recognitionRef.current.onerror = (event: any) => {
@@ -146,6 +193,8 @@ export default function VoiceRecorder({
   const startRecording = () => {
     if (browserSpeechAvailable && recognitionRef.current) {
       setTranscription("");
+      setInterimTranscript("");
+      setValidationError("");
       recognitionRef.current.start();
       setIsRecording(true);
     } else if (mediaRecorderRef.current) {
@@ -235,6 +284,21 @@ export default function VoiceRecorder({
       {/* Instructions */}
       <p className="text-muted-foreground text-sm">{t.instructions}</p>
 
+      {/* Real-time Transcription Display */}
+      {isRecording && (
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-xs text-blue-600 font-semibold mb-2">Live Transcription</p>
+          <p className="text-sm text-foreground min-h-[40px]">
+            {transcription}
+            {interimTranscript && (
+              <span className="text-muted-foreground italic ml-1 opacity-70">
+                {interimTranscript}
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Recording Controls */}
       <div className="space-y-4">
         {!recordedAudio ? (
@@ -291,18 +355,29 @@ export default function VoiceRecorder({
       </div>
 
       {/* Transcription Display & Edit */}
-      {transcription && (
+      {transcription && !isRecording && (
         <div className="space-y-3 p-4 bg-info/10 rounded-lg border border-info/20">
           <label className="block text-sm font-medium">{t.edit}</label>
           <textarea
             value={transcription}
-            onChange={(e) => setTranscription(e.target.value)}
+            onChange={(e) => {
+              setTranscription(e.target.value);
+              setValidationError("");
+            }}
             className="w-full p-3 border border-border rounded"
             rows={4}
           />
+          
+          {/* Validation Error */}
+          {validationError && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded text-destructive text-sm">
+              {validationError}
+            </div>
+          )}
+          
           <button
-            onClick={() => onTranscriptionComplete(transcription)}
-            className="w-full bg-primary text-primary-foreground py-2 px-4 rounded font-semibold hover:opacity-90 transition-colors"
+            onClick={validateAndProceed}
+            className="w-full bg-primary text-primary-foreground py-2 px-4 rounded font-semibold hover:opacity-90 transition-colors disabled:opacity-50"
           >
             {t.nextStep}
           </button>
