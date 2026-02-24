@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <style>
+    .box { fill:#ffffff; stroke:#333; stroke-width:2; rx:10; ry:10 }
+    .start { fill:#f9f1ff }
+    .query { fill:#fff7e6 }
+    .lookup { fill:#e8f6ff }
+    .decision { fill:#ffecec }
+    .ok { fill:#e8ffe8 }
+    .alert { fill:#ffdede }
+    .suggest { fill:#fff6d9 }
+    .label { font: 18px Arial, Helvetica, sans-serif; fill:#111 }
+    .small { font: 14px Arial, Helvetica, sans-serif; fill:#111 }
+    .arrow { stroke:#333; stroke-width:2; fill:none; marker-end:url(#arrowhead) }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#333" />
+    </marker>
+  </defs>
+
+  <!-- Nodes -->
+  <rect x="60" y="60" width="260" height="80" class="box start" />
+  <text x="190" y="110" text-anchor="middle" class="label">Proposed Medication List</text>
+
+  <rect x="420" y="60" width="220" height="80" class="box query" />
+  <text x="530" y="100" text-anchor="middle" class="label">Query Hash Table</text>
+
+  <rect x="700" y="60" width="240" height="80" class="box lookup" />
+  <text x="820" y="100" text-anchor="middle" class="label">Lookup Interacting Pairs</text>
+
+  <rect x="420" y="200" width="260" height="100" class="box decision" rx="20" ry="20" />
+  <text x="550" y="245" text-anchor="middle" class="label">Interaction Found?</text>
+  <text x="550" y="270" text-anchor="middle" class="small">(dangerous / clinically significant)</text>
+
+  <rect x="60" y="360" width="260" height="80" class="box ok" />
+  <text x="190" y="410" text-anchor="middle" class="label">Approve Medication</text>
+
+  <rect x="420" y="360" width="260" height="80" class="box alert" />
+  <text x="550" y="410" text-anchor="middle" class="label">Alert User</text>
+
+  <rect x="760" y="300" width="300" height="80" class="box suggest" />
+  <text x="910" y="335" text-anchor="middle" class="label">Suggest Alternatives</text>
+  <text x="910" y="355" text-anchor="middle" class="small">or adjust dosages / avoid combo</text>
+
+  <rect x="760" y="420" width="300" height="80" class="box suggest" />
+  <text x="910" y="455" text-anchor="middle" class="label">Advise Doctor Consultation</text>
+
+  <!-- Arrows -->
+  <path d="M320 100 L420 100" class="arrow" />
+  <path d="M640 100 L700 100" class="arrow" />
+  <path d="M820 140 L820 200" class="arrow" />
+  <path d="M550 300 L550 360" class="arrow" />
+
+  <!-- Decision branches -->
+  <path d="M490 300 L320 300 L320 400 L190 400" class="arrow" />
+  <path d="M610 300 L760 300" class="arrow" />
+
+  <!-- From Alert to two actions -->
+  <path d="M550 400 L760 400" class="arrow" />
+  <path d="M820 380 L820 320" class="arrow" />
+  <path d="M820 460 L820 420" class="arrow" />
+
+  <!-- Labels on branches -->
+  <text x="360" y="280" class="small">No</text>
+  <text x="720" y="280" class="small">Yes</text>
+
+  <!-- Footer note -->
+  <text x="60" y="700" class="small">Flowchart: Drug-Drug Interaction (DDI) checking — queries a precomputed hash table of interacting pairs; alerts and suggests alternatives when dangerous interactions detected.</text>
+
+</svg>
