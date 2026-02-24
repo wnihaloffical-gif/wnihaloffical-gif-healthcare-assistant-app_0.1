@@ -98,14 +98,14 @@ export default function NewConsultationPage() {
       const saveData = await saveResponse.json();
 
       // Store for results page
-      sessionStorage.setItem(
-        "analysisData",
-        JSON.stringify({
-          ...analysis,
-          consultationId: saveData.consultationId,
-          blockchainHash: saveData.blockchainHash,
-        }),
-      );
+      const dataToStore = {
+        ...analysis,
+        consultationId: saveData.consultationId,
+        blockchainHash: saveData.blockchainHash,
+      };
+      console.log("[v0] Storing analysis data in sessionStorage:", dataToStore);
+      sessionStorage.setItem("analysisData", JSON.stringify(dataToStore));
+      console.log("[v0] Data stored. Navigating to results page...");
       router.push("/patient/consultation/analysis-results");
     } catch (error) {
       console.error("Analysis error:", error);
