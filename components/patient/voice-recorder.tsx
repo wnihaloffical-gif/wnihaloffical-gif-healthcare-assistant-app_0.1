@@ -8,6 +8,12 @@ interface VoiceRecorderProps {
   onLanguageChange: (lang: string) => void;
 }
 
+const languageMap: Record<string, string> = {
+  en: "en-US",
+  hi: "hi-IN",
+  mr: "mr-IN",
+};
+
 export default function VoiceRecorder({
   language,
   onTranscriptionComplete,
@@ -17,7 +23,9 @@ export default function VoiceRecorder({
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [transcription, setTranscription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [browserSpeechAvailable, setBrowserSpeechAvailable] = useState(true);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recognitionRef = useRef<any>(null);
   const chunksRef = useRef<Blob[]>([]);
 
   const langText = {
@@ -66,6 +74,48 @@ export default function VoiceRecorder({
   const t = langText[language as keyof typeof langText];
 
   useEffect(() => {
+    // Check for Web Speech API availability
+    const SpeechRecognition =
+      typeof window !== "undefined" &&
+      (window.SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+    if (!SpeechRecognition) {
+      console.warn("Web Speech API not available, fallback mode enabled");
+      setBrowserSpeechAvailable(false);
+      initMediaRecorder();
+    } else {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = languageMap[language] || "en-US";
+
+      recognitionRef.current.onstart = () => {
+        console.log("[v0] Speech recognition started");
+      };
+
+      recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            setTranscription((prev) => prev + (prev ? " " : "") + transcript);
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("[v0] Speech recognition error:", event.error);
+      };
+
+      recognitionRef.current.onend = () => {
+        console.log("[v0] Speech recognition ended");
+        setIsRecording(false);
+      };
+    }
+
+    // Also setup media recorder as fallback
     const initMediaRecorder = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -88,25 +138,34 @@ export default function VoiceRecorder({
       }
     };
 
-    initMediaRecorder();
-  }, []);
+    if (!browserSpeechAvailable) {
+      initMediaRecorder();
+    }
+  }, [language, browserSpeechAvailable]);
 
   const startRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (browserSpeechAvailable && recognitionRef.current) {
+      setTranscription("");
+      recognitionRef.current.start();
+      setIsRecording(true);
+    } else if (mediaRecorderRef.current) {
       mediaRecorderRef.current.start();
       setIsRecording(true);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    if (browserSpeechAvailable && recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    } else if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
     }
   };
 
   const handleTranscribe = async () => {
-    if (!recordedAudio) return;
+    if (!recordedAudio || !browserSpeechAvailable) return;
 
     setLoading(true);
     try {
