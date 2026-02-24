@@ -4,7 +4,8 @@
   "private": true,
   "description": "Multi-language AI + Blockchain Healthcare Assistant",
   "scripts": {
-    "build": "DATABASE_URL='mysql://user:password@localhost:3306/db' prisma generate && next build",
+    "build": "next build",
+    "postinstall": "prisma generate",
     "db:check": "ts-node scripts/check-db.ts",
     "db:push": "prisma db push",
     "db:seed": "ts-node scripts/seed.ts",
