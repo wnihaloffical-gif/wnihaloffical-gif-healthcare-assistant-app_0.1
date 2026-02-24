@@ -21,27 +21,31 @@ export default function AnalysisResultsPage() {
     }
 
     // Retrieve actual analysis data from sessionStorage
-    const storedData = sessionStorage.getItem("analysisData");
+    // Add small delay to ensure data is available
+    const timer = setTimeout(() => {
+      const storedData = sessionStorage.getItem("analysisData");
+      console.log("[v0] Attempting to retrieve analysis data from session...");
 
-    if (storedData) {
-      try {
-        const data = JSON.parse(storedData);
-        setAnalysisData(data);
-        console.log("[v0] Loaded analysis data from session:", data);
-        // Clear after retrieving
-        sessionStorage.removeItem("analysisData");
-      } catch (error) {
-        console.error("[v0] Failed to parse stored data:", error);
-        // No fallback - show error state instead
+      if (storedData) {
+        try {
+          const data = JSON.parse(storedData);
+          setAnalysisData(data);
+          console.log("[v0] Loaded analysis data from session:", data);
+          // Clear after retrieving
+          sessionStorage.removeItem("analysisData");
+        } catch (error) {
+          console.error("[v0] Failed to parse stored data:", error);
+          setAnalysisData(null);
+        }
+      } else {
+        console.warn("[v0] No analysis data found in session storage");
         setAnalysisData(null);
       }
-    } else {
-      console.warn("[v0] No analysis data found in session");
-      // No fallback - show error state instead
-      setAnalysisData(null);
-    }
 
-    setLoading(false);
+      setLoading(false);
+    }, 100); // Small delay to ensure navigation is complete
+
+    return () => clearTimeout(timer);
   }, [router]);
 
   if (loading) {
