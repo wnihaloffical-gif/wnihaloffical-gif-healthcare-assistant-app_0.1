@@ -2,6 +2,11 @@ import { prisma } from "@/lib/db/prisma"
 import { logger } from "@/lib/db/logger"
 import { type NextRequest, NextResponse } from "next/server"
 
+function parseDoctorId(value: string): number | null {
+  const digits = value.replace(/\D/g, "")
+  return digits ? parseInt(digits, 10) : null
+}
+
 function mapConsultationRow(row: any) {
   return {
     id: row.id,
@@ -35,12 +40,26 @@ function mapConsultationRow(row: any) {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: patientId } = await params
+    const { id: doctorId } = await params
+    const parsedDoctorId = parseDoctorId(doctorId)
 
-    logger.info("Fetching patient consultations", { patientId }, "CONSULTATION")
+    logger.info(
+      "Fetching doctor consultations",
+      { doctorId, parsedDoctorId },
+      "DOCTOR_CONSULTATIONS",
+    )
+
+    const whereFilter = parsedDoctorId !== null
+      ? {
+          OR: [
+            { doctorId: parsedDoctorId },
+            { doctorId: null, status: "PENDING" },
+          ],
+        }
+      : { doctorId: null, status: "PENDING" }
 
     const consultations = await prisma.consultation.findMany({
-      where: { patientId: parseInt(patientId, 10) },
+      where: whereFilter,
       include: {
         blockchainRecord: true,
       },
@@ -50,9 +69,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(consultations.map(mapConsultationRow))
   } catch (error) {
     logger.error(
-      "Failed to fetch patient consultations",
-      { patientId: "unknown" },
-      "CONSULTATION",
+      "Failed to fetch doctor consultations",
+      { doctorId: "unknown" },
+      "DOCTOR_CONSULTATIONS",
       error instanceof Error ? error.message : String(error),
     )
     return NextResponse.json({ message: "Failed to fetch consultations" }, { status: 500 })

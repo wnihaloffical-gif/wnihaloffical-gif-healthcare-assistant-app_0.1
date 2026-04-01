@@ -23,14 +23,11 @@ function isCacheValid(): boolean {
 async function fetchDoctorMetrics() {
   try {
     // Get total consultations
-    const totalConsultations = await prisma.consultation.count({
-      where: { doctorId: { not: null } },
-    });
+    const totalConsultations = await prisma.consultation.count();
 
     // Get consultations by status
     const consultationsByStatus = await prisma.consultation.groupBy({
       by: ["status"],
-      where: { doctorId: { not: null } },
       _count: true,
     });
 
@@ -38,7 +35,6 @@ async function fetchDoctorMetrics() {
     const pendingConsultations = await prisma.consultation.count({
       where: {
         status: "PENDING",
-        doctorId: { not: null },
       },
     });
 
@@ -46,22 +42,22 @@ async function fetchDoctorMetrics() {
     const completedConsultations = await prisma.consultation.count({
       where: {
         status: "COMPLETED",
-        doctorId: { not: null },
       },
     });
 
     // Get high-risk consultations
     const highRiskConsultations = await prisma.consultation.count({
       where: {
-        riskLevel: "HIGH",
-        doctorId: { not: null },
+        riskLevel: {
+          equals: "HIGH",
+          mode: "insensitive",
+        },
       },
     });
 
     // Get consultations by risk level
     const consultationsByRisk = await prisma.consultation.groupBy({
       by: ["riskLevel"],
-      where: { doctorId: { not: null } },
       _count: true,
     });
 
